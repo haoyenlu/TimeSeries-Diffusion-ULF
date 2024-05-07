@@ -71,7 +71,7 @@ class LearnablePositionalEncoding(nn.Module):
         x = x + self.pe
         return self.dropout(x)
     
-class moving_avg(nn.Moduel):
+class moving_avg(nn.Module):
     """
     Moving Average block to highlight the trend of time series
     """
