@@ -260,8 +260,8 @@ class Diffusion_TS(nn.Module):
         return train_loss.mean()
 
     def forward(self, x, **kwargs):
-        print(x.shape)
         b, c, n, device, feature_size, = *x.shape, x.device, self.feature_size
+        print(x.device)
         assert n == feature_size, f'number of variable must be {feature_size}'
         t = torch.randint(0, self.num_timesteps, (b,), device=device).long()
         return self._train_loss(x_start=x, t=t, **kwargs)
