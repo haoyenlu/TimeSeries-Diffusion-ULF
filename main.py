@@ -29,6 +29,9 @@ def main():
 
     seed_everything(args.seed)
 
+    os.makedirs(args.output,exist_ok=True)
+    os.makedirs(args.sample,exist_ok=True)
+
     config = load_yaml_config(args.config)
     
     model = instantiate_from_config(config['model']).cuda()
