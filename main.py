@@ -43,7 +43,7 @@ def main():
     elif args.mode == 'sample':
         trainer.load(args.milestone)
         sample = trainer.sample(config)
-        np.save(os.path.join(args.sample,f"ddpm_{args.task}.npy",sample))
+        np.save(os.path.join(args.sample,f"ddpm_{args.task}.npy"),sample)
 
 if __name__ == '__main__':
     main()
