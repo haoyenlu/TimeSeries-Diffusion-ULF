@@ -12,7 +12,6 @@ def parse_argument():
     parser = argparse.ArgumentParser(description='Pytorch Training Script')
     parser.add_argument('--data',type=str,default=None)
     parser.add_argument('--config',type=str,default=None)
-    parser.add_argument('--output',type=str,help="Save Checkpoint Directory",default='./ckpt')
     parser.add_argument('--sample',type=str,default='./samples')
     parser.add_argument('--tensorboard',action='store_true')
     parser.add_argument('--mode',type=str)
@@ -29,7 +28,6 @@ def main():
 
     seed_everything(args.seed)
 
-    os.makedirs(args.output,exist_ok=True)
     os.makedirs(args.sample,exist_ok=True)
 
     config = load_yaml_config(args.config)
@@ -44,7 +42,7 @@ def main():
 
     elif args.mode == 'sample':
         trainer.load(args.milestone)
-        sample = trainer.sample(num=config['dataset']['num_sample'],size_every = config['dataset']['size_every'])
+        sample = trainer.sample(num=config['dataset']['samples']['num_sample'],size_every = config['dataset']['samples']['size_every'])
         np.save(os.path.join(args.sample,f"ddpm_{args.task}.npy",sample))
 
 if __name__ == '__main__':
