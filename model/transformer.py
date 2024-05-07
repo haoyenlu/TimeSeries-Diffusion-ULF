@@ -8,86 +8,91 @@ from einops import rearrange, reduce, repeat
 from model.model_utils import LearnablePositionalEncoding, Conv_MLP, AdaLayerNorm, Transpose, GELU2, series_decomp
 
 class TrendBlock(nn.Module):
-    '''
-    Model trend of time series using polynomial regressor.
-    '''
-    def __init__(self,in_dim,out_dim,in_feat,out_feat,act):
-        super(TrendBlock,self).__init__()
+    """
+    Model trend of time series using the polynomial regressor.
+    """
+    def __init__(self, in_dim, out_dim, in_feat, out_feat, act):
+        super(TrendBlock, self).__init__()
         trend_poly = 3
         self.trend = nn.Sequential(
-            nn.Conv1d(in_channels=in_dim,out_channels=trend_poly,kernel_size=3,padding=1),
+            nn.Conv1d(in_channels=in_dim, out_channels=trend_poly, kernel_size=3, padding=1),
             act,
-            Transpose(shape=(1,2)),
-            nn.Conv1d(in_feat,out_feat,3,stride=1,padding=1)
+            Transpose(shape=(1, 2)),
+            nn.Conv1d(in_feat, out_feat, 3, stride=1, padding=1)
         )
 
-        lin_space = torch.arange(1,out_dim+1,1) / (out_dim + 1)
-        self.poly_space = torch.stack([lin_space ** float(p+1) for p in range(trend_poly)],dim=0)
+        lin_space = torch.arange(1, out_dim + 1, 1) / (out_dim + 1)
+        self.poly_space = torch.stack([lin_space ** float(p + 1) for p in range(trend_poly)], dim=0)
 
-    def forward(self,input):
-        b ,c ,h = input.shape
-        x = self.trend(input).transpose(1,2)
-        trend_vals = torch.matmul(x.transpose(1,2),self.poly_space.to(x.device))
-        trend_vals = trend_vals.transpose(1,2)
+    def forward(self, input):
+        b, c, h = input.shape
+        x = self.trend(input).transpose(1, 2)
+        trend_vals = torch.matmul(x.transpose(1, 2), self.poly_space.to(x.device))
+        trend_vals = trend_vals.transpose(1, 2)
         return trend_vals
+    
 
 class MovingBlock(nn.Module):
-    '''
-    Model trend of time series using moving average
-    '''
-    def __init__(self,out_dim):
-        super(MovingBlock,self).__init__()
-        size = max(min(int(out_dim/4), 24),4)
+    """
+    Model trend of time series using the moving average.
+    """
+    def __init__(self, out_dim):
+        super(MovingBlock, self).__init__()
+        size = max(min(int(out_dim / 4), 24), 4)
         self.decomp = series_decomp(size)
 
-    def forward(self,input):
-        b , c , h = input.shape
+    def forward(self, input):
+        b, c, h = input.shape
         x, trend_vals = self.decomp(input)
-        return x , trend_vals
-    
+        return x, trend_vals
+
+
 class FourierLayer(nn.Module):
     """
-    Model seasonality of time series using the inverse DFT
+    Model seasonality of time series using the inverse DFT.
     """
-    def __init__(self,d_model,low_freq=1,factor=1):
+    def __init__(self, d_model, low_freq=1, factor=1):
         super().__init__()
         self.d_model = d_model
         self.factor = factor
         self.low_freq = low_freq
 
-    def forward(self,x):
-        b , t ,d = x.shape
-        x_freq = torch.fft.rfft(x,dim=1)
+    def forward(self, x):
+        """x: (b, t, d)"""
+        b, t, d = x.shape
+        x_freq = torch.fft.rfft(x, dim=1)
 
         if t % 2 == 0:
-            x_freq = x_freq[:,self.low_freq:-1]
+            x_freq = x_freq[:, self.low_freq:-1]
             f = torch.fft.rfftfreq(t)[self.low_freq:-1]
         else:
-            x_freq = x_freq[:,self.low_freq:]
+            x_freq = x_freq[:, self.low_freq:]
             f = torch.fft.rfftfreq(t)[self.low_freq:]
 
         x_freq, index_tuple = self.topk_freq(x_freq)
-        f = repeat(f,'f -> b f d',b=x_freq.size(0),d=x_freq.size(2)).to(x_freq.device)
-        f = rearrange(f[index_tuple],'b f d -> b f () d').to(x_freq.device)
-        return self.extrapolate(x_freq,f,t)
-    
-    def extrapolate(self,x_freq,f,t):
-        x_freq = torch.cat([x_freq,x_freq.conj()],dim=1)
-        f = torch.cat([f,-f],dim=-1)
-        t = rearrange(torch.arange(t,dtype=torch.float),'t -> () () t ()').to(x_freq.device)
-        amp = rearrange(x_freq.abs(),'b f d -> b f () d')
-        phase = rearrange(x_freq.angle(),'b f d -> b f () d')
+        f = repeat(f, 'f -> b f d', b=x_freq.size(0), d=x_freq.size(2)).to(x_freq.device)
+        f = rearrange(f[index_tuple], 'b f d -> b f () d').to(x_freq.device)
+        return self.extrapolate(x_freq, f, t)
+
+    def extrapolate(self, x_freq, f, t):
+        x_freq = torch.cat([x_freq, x_freq.conj()], dim=1)
+        f = torch.cat([f, -f], dim=1)
+        t = rearrange(torch.arange(t, dtype=torch.float),
+                      't -> () () t ()').to(x_freq.device)
+
+        amp = rearrange(x_freq.abs(), 'b f d -> b f () d')
+        phase = rearrange(x_freq.angle(), 'b f d -> b f () d')
         x_time = amp * torch.cos(2 * math.pi * f * t + phase)
-        return reduce(x_time,'b f t d -> b t d','sum')
-    
-    def topk_freq(self,x_freq):
+        return reduce(x_time, 'b f t d -> b t d', 'sum')
+
+    def topk_freq(self, x_freq):
         length = x_freq.shape[1]
         top_k = int(self.factor * math.log(length))
         values, indices = torch.topk(x_freq.abs(), top_k, dim=1, largest=True, sorted=True)
-        mesh_a , mesh_b = torch.meshgrid(torch.arange(x_freq.size(0)), torch.arange(x_freq.size(2)), indexing='ij')
-        index_tuple = (mesh_a.unsqueeze(1), indices , mesh_b.unsqueeze(1))
+        mesh_a, mesh_b = torch.meshgrid(torch.arange(x_freq.size(0)), torch.arange(x_freq.size(2)), indexing='ij')
+        index_tuple = (mesh_a.unsqueeze(1), indices, mesh_b.unsqueeze(1))
         x_freq = x_freq[index_tuple]
-        return x_freq , index_tuple
+        return x_freq, index_tuple
     
 
 class SeasonBlock(nn.Module):
