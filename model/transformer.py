@@ -28,7 +28,7 @@ class TrendBlock(nn.Module):
         b ,c ,h = input.shape
         x = self.trend(input).transpose(1,2)
         trend_vals = torch.matmul(x.transpose(1,2),self.poly_space.to(x.device))
-        trend_vals = trend_vals.tranpose(1,2)
+        trend_vals = trend_vals.transpose(1,2)
         return trend_vals
 
 class MovingBlock(nn.Module):
