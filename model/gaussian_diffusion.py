@@ -242,6 +242,7 @@ class Diffusion_TS(nn.Module):
             target = x_start
 
         x = self.q_sample(x_start=x_start, t=t, noise=noise)  # noise sample
+        print(x.dtype)
         model_out = self.output(x, t, padding_masks)
 
         train_loss = self.loss_fn(model_out, target, reduction='none')
@@ -261,7 +262,6 @@ class Diffusion_TS(nn.Module):
 
     def forward(self, x, **kwargs):
         b, c, n, device, feature_size, = *x.shape, x.device, self.feature_size
-        print(x.dtype)
         assert n == feature_size, f'number of variable must be {feature_size}'
         t = torch.randint(0, self.num_timesteps, (b,), device=device)
         return self._train_loss(x_start=x, t=t, **kwargs)
