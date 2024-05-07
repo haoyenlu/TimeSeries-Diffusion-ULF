@@ -242,8 +242,7 @@ class Diffusion_TS(nn.Module):
             target = x_start
 
         x = self.q_sample(x_start=x_start, t=t, noise=noise)  # noise sample
-        print(x.dtype)
-        model_out = self.output(x, t, padding_masks)
+        model_out = self.output(x.float(), t, padding_masks)
 
         train_loss = self.loss_fn(model_out, target, reduction='none')
 
