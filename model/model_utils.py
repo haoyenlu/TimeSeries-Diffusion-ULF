@@ -60,9 +60,9 @@ class SinusoidalPosEmb(nn.Module):
     
 # learnable positional emb
 
-class LearnablePositionalEncoder(nn.Module):
+class LearnablePositionalEncoding(nn.Module):
     def __init__(self,d_model,dropout=0.1,max_len=1024):
-        super(LearnablePositionalEncoder,self).__init__()
+        super(LearnablePositionalEncoding,self).__init__()
         self.dropout = nn.Dropout(p=dropout)
         self.pe = nn.Parameter(torch.empty(1,max_len,d_model))
         nn.init.uniform_(self.pe,-0.02,0.02)
@@ -156,7 +156,7 @@ class Transformer_MLP(nn.Module):
         return self.sequential(x)
     
 
-class GELU(nn.Module):
+class GELU2(nn.Module):
     def __init__(self):
         super().__init__()
     def forward(self,x):

@@ -28,3 +28,12 @@ def instantiate_from_config(config):
     module, cls = config["target"].rsplit(".", 1)
     cls = getattr(importlib.import_module(module, package=None), cls)
     return cls(**config.get("params", dict()))
+
+def seed_everything(seed):
+    if seed is not None:
+        print(f"Set global seed to {seed}")
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = False

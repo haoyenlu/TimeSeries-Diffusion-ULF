@@ -102,3 +102,14 @@ class Trainer:
         
         print("Training Complete","time:{:.2f}".format(time.time()-tic))
 
+    def sample(self,num,size_every,shape=None):
+        samples = np.empty([0,shape[0],shape[1]])
+        num_cycle = int(num // size_every) + 1
+
+        for _ in range(num_cycle):
+            sample = self.ema.ema_model.generate_mts(batch_size=size_every)
+            samples = np.row_stack([samples , sample.detach().cpu().numpy()])
+            torch.cuda.empty_cache()
+
+        return samples
+    
