@@ -6,5 +6,5 @@ def build_dataloader(config,args):
     train_data = numpy_data['data']
     dataloader = torch.utils.data.DataLoader(train_data,config['dataset']['batch_size'],shuffle=True)
     _, feat , seq_len = train_data.shape
-    assert seq_len == config['model']['param']['seq_length'] and config['model']['params']['feature_size'] == feat
+    assert seq_len == config['model']['params']['seq_length'] and config['model']['params']['feature_size'] == feat
     return dataloader
