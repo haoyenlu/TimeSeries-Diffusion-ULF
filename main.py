@@ -47,4 +47,5 @@ def main():
         sample = trainer.sample(num=config['dataset']['num_sample'],size_every = config['dataset']['size_every'])
         np.save(os.path.join(args.sample,f"ddpm_{args.task}.npy",sample))
 
-
+if __name__ == '__main__':
+    main()
