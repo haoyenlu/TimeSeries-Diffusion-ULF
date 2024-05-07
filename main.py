@@ -42,7 +42,7 @@ def main():
 
     elif args.mode == 'sample':
         trainer.load(args.milestone)
-        sample = trainer.sample(num=config['dataset']['samples']['num_sample'],size_every = config['dataset']['samples']['size_every'])
+        sample = trainer.sample(config)
         np.save(os.path.join(args.sample,f"ddpm_{args.task}.npy",sample))
 
 if __name__ == '__main__':

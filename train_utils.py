@@ -102,8 +102,10 @@ class Trainer:
         
         print("Training Complete","time:{:.2f}".format(time.time()-tic))
 
-    def sample(self,num,size_every,shape=None):
-        samples = np.empty([0,shape[0],shape[1]])
+    def sample(self,config):
+        samples = np.empty([0,config['model']['params']['seq_length'],config['model']['params']['feature_size']])
+        num = config['dataset']['samples']['num_sample']
+        size_every = config['dataset']['samples']['size_every']
         num_cycle = int(num // size_every) + 1
 
         for _ in range(num_cycle):
