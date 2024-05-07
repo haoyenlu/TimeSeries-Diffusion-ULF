@@ -6,7 +6,7 @@ from torch import nn
 from einops import reduce
 from tqdm.auto import tqdm
 from functools import partial
-from transformer import Transformer
+from model.transformer import Transformer
 from model_utils import default, identity, extract
 
 

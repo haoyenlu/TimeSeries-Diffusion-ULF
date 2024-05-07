@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 from torch import nn
 from einops import rearrange, reduce, repeat
-from model_utils import LearnablePositionalEncoding, Conv_MLP, AdaLayerNorm, Transpose, GELU2, series_decomp
+from model.model_utils import LearnablePositionalEncoding, Conv_MLP, AdaLayerNorm, Transpose, GELU2, series_decomp
 
 class TrendBlock(nn.Module):
     '''
