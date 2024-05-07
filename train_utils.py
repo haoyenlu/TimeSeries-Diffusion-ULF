@@ -58,7 +58,7 @@ class Trainer:
     def load(self,milestone):
         device = self.device
         data = torch.load(os.path.join(self.results_folder,f'checkpoint-{milestone}.pt'),map_location=device)
-        self.model.load_state_dice(data['model'])
+        self.model.load_state_dict(data['model'])
         self.step = data['step']
         self.opt.load_state_dict(data['opt'])
         self.ema.load_state_dict(data['ema'])
