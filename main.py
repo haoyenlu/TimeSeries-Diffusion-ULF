@@ -15,7 +15,7 @@ def parse_argument():
     parser.add_argument('--output',type=str,help="Save Checkpoint Directory",default='./ckpt')
     parser.add_argument('--sample',type=str,default='./samples')
     parser.add_argument('--tensorboard',action='store_true')
-    parser.add_arugment('--mode',type=str)
+    parser.add_argument('--mode',type=str)
     parser.add_argument('--seed',type=int,default=12345)
     parser.add_argument('--task',type=str,default='T01')
     parser.add_argument('--milestone',type=int,default=10)
