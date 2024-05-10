@@ -6,8 +6,7 @@ def build_dataloader(config,args):
     if args.use_label:
         dataset = []
         for data,label in zip(numpy_data['data'],numpy_data['label']):
-            print(label)
-            dataset.append([data.transpose(0,2,1),label])
+            dataset.append([data.transpose(1,0),label])
     else:
         dataset = numpy_data['data'].transpose(0,2,1)
     dataloader = torch.utils.data.DataLoader(dataset,config['dataset']['batch_size'],shuffle=True)
