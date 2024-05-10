@@ -13,7 +13,7 @@ from io_utils import instantiate_from_config
 
 def cycle(dl):
     while True:
-        for data,label in dl:
+        for data in dl:
             yield data
 
 class Trainer:
@@ -78,7 +78,8 @@ class Trainer:
                 total_loss = 0
                 for _ in range(self.gradient_accumulate_every):
                     if self.args.use_label:
-                        data, label = next(self.dl).to(device)
+                        temp = next(self.dl)
+                        data, label = temp[0].to(device), temp[1].to(device)
                     else:
                         data = next(self.dl).to(device)
                         label = None
