@@ -18,6 +18,7 @@ def parse_argument():
     parser.add_argument('--seed',type=int,default=12345)
     parser.add_argument('--task',type=str,default='T01')
     parser.add_argument('--milestone',type=int,default=10)
+    parser.add_argument('--use_label',action='store_true')
 
     args = parser.parse_args()
 

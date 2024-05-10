@@ -13,7 +13,7 @@ from io_utils import instantiate_from_config
 
 def cycle(dl):
     while True:
-        for data in dl:
+        for data,label in dl:
             yield data
 
 class Trainer:
@@ -77,8 +77,13 @@ class Trainer:
             while step < self.train_num_epochs:
                 total_loss = 0
                 for _ in range(self.gradient_accumulate_every):
-                    data = next(self.dl).to(device)
-                    loss = self.model(data,target=data)
+                    if self.args.use_label:
+                        data, label = next(self.dl).to(device)
+                    else:
+                        data = next(self.dl).to(device)
+                        label = None
+
+                    loss = self.model(data,target=data,label=label)
                     loss = loss / self.gradient_accumulate_every
                     loss.backward()
                     total_loss += loss.item()

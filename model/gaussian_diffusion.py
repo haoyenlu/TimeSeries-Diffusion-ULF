@@ -235,13 +235,13 @@ class Diffusion_TS(nn.Module):
                 extract(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape) * noise
         )
 
-    def _train_loss(self, x_start, t, target=None, noise=None, padding_masks=None):
+    def _train_loss(self, x_start, t, target=None, noise=None, padding_masks=None,label=None):
         noise = default(noise, lambda: torch.randn_like(x_start))
         if target is None:
             target = x_start
 
         x = self.q_sample(x_start=x_start, t=t, noise=noise)  # noise sample
-        model_out = self.output(x.float(), t, padding_masks)
+        model_out = self.output(x.float(), t, padding_masks,label=label)
 
         train_loss = self.loss_fn(model_out, target, reduction='none')
 
