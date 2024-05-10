@@ -399,7 +399,11 @@ class Transformer(nn.Module):
         self.inverse = Conv_MLP(n_embd, n_feat, resid_pdrop=resid_pdrop)
 
         if label_dim is not None:
-            self.label_emb = nn.Embedding(label_dim,n_embd)
+            self.label_emb = nn.Sequential(
+                nn.Embedding(label_dim,n_embd),
+                nn.Linear(n_embd,n_embd)
+                )
+            
 
         if conv_params is None or conv_params[0] is None:
             if n_feat < 32 and n_channel < 64:

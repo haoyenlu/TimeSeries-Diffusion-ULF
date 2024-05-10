@@ -184,7 +184,8 @@ class Diffusion_TS(nn.Module):
         label = torch.randint(low=0,high=self.label_dim,size=(shape[0],)) if use_label else None
         for t in reversed(range(0, self.num_timesteps)):
             img, _ = self.p_sample(img, t,label=label)
-        return img
+
+        return img, label if use_label else img
 
     @torch.no_grad()
     def fast_sample(self, shape, clip_denoised=True,use_label=False):
@@ -215,7 +216,7 @@ class Diffusion_TS(nn.Module):
                   c * pred_noise + \
                   sigma * noise
 
-        return img
+        return img, label if use_label else img
 
     def generate_mts(self, batch_size=16,use_label=False):
         feature_size, seq_length = self.feature_size, self.seq_length

@@ -110,14 +110,22 @@ class Trainer:
 
     def sample(self,config):
         samples = np.empty([0,config['model']['params']['seq_length'],config['model']['params']['feature_size']])
+        labels = []
         num = config['dataset']['samples']['num_sample']
         size_every = config['dataset']['samples']['size_every']
         num_cycle = int(num // size_every) + 1
 
+
         for _ in tqdm(range(num_cycle)):
-            sample = self.ema.ema_model.generate_mts(batch_size=size_every,use_label=self.args.use_label)
-            samples = np.row_stack([samples , sample.detach().cpu().numpy()])
+            if self.args.use_label:
+                sample,label = self.ema.ema_model.generate_mts(batch_size=size_every,use_label=True)
+                samples = np.row_stack([samples , sample.detach().cpu().numpy()])
+                labels.append(label)
+            else:
+                sample = self.ema.ema_model.generate_mts(batch_size=size_every,use_label=False)
+                samples = np.row_stack([samples , sample.detach().cpu().numpy()])
+
             torch.cuda.empty_cache()
 
-        return samples
+        return samples,labels if self.args.use_label else samples
     
