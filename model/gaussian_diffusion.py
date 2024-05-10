@@ -181,7 +181,7 @@ class Diffusion_TS(nn.Module):
     def sample(self, shape,use_label=False):
         device = self.betas.device
         img = torch.randn(shape, device=device)
-        label = torch.randint(low=0,high=self.label_dim,size=(shape[0],)) if use_label else None
+        label = torch.randint(low=0,high=self.label_dim,size=(shape[0],),device=device) if use_label else None
         for t in reversed(range(0, self.num_timesteps)):
             img, _ = self.p_sample(img, t,label=label)
 
@@ -198,7 +198,7 @@ class Diffusion_TS(nn.Module):
         times = list(reversed(times.int().tolist()))
         time_pairs = list(zip(times[:-1], times[1:]))  # [(T-1, T-2), (T-2, T-3), ..., (1, 0), (0, -1)]
         img = torch.randn(shape, device=device)
-        label = torch.randint(low=0,high=self.label_dim,size=(shape[0],)) if use_label else None
+        label = torch.randint(low=0,high=self.label_dim,size=(shape[0],),device=device) if use_label else None
         for time, time_next in tqdm(time_pairs, desc='sampling loop time step'):
             time_cond = torch.full((batch,), time, device=device, dtype=torch.long)
             pred_noise, x_start, *_ = self.model_predictions(img, time_cond, clip_x_start=clip_denoised,label=label)
