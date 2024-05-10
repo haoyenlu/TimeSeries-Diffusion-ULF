@@ -66,7 +66,7 @@ class Diffusion_TS(nn.Module):
 
         self.model = Transformer(n_feat=feature_size, n_channel=seq_length, n_layer_enc=n_layer_enc, n_layer_dec=n_layer_dec,
                                  n_heads=n_heads, attn_pdrop=attn_pd, resid_pdrop=resid_pd, mlp_hidden_times=mlp_hidden_times,
-                                 max_len=seq_length, n_embd=d_model, conv_params=[kernel_size, padding_size], label_dim=label_dim **kwargs)
+                                 max_len=seq_length, n_embd=d_model, conv_params=[kernel_size, padding_size], label_dim=label_dim, **kwargs)
 
         if beta_schedule == 'linear':
             betas = linear_beta_schedule(timesteps)
