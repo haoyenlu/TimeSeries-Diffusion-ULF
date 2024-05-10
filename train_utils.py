@@ -120,12 +120,12 @@ class Trainer:
             if self.args.use_label:
                 sample,label = self.ema.ema_model.generate_mts(batch_size=size_every,use_label=True)
                 samples = np.row_stack([samples , sample.detach().cpu().numpy()])
-                labels.append(label)
+                labels.append(label.detach().cpu().numpy())
             else:
                 sample = self.ema.ema_model.generate_mts(batch_size=size_every,use_label=False)
                 samples = np.row_stack([samples , sample.detach().cpu().numpy()])
 
             torch.cuda.empty_cache()
 
-        return samples,labels if self.args.use_label else samples
+        return samples,np.array(labels) if self.args.use_label else samples
     
