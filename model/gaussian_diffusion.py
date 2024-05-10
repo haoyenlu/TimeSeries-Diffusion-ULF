@@ -62,6 +62,7 @@ class Diffusion_TS(nn.Module):
         self.seq_length = seq_length
         self.feature_size = feature_size
         self.ff_weight = default(reg_weight, math.sqrt(self.seq_length) / 5)
+        self.label_dim = label_dim
 
         self.model = Transformer(n_feat=feature_size, n_channel=seq_length, n_layer_enc=n_layer_enc, n_layer_dec=n_layer_dec,
                                  n_heads=n_heads, attn_pdrop=attn_pd, resid_pdrop=resid_pd, mlp_hidden_times=mlp_hidden_times,
@@ -145,47 +146,48 @@ class Diffusion_TS(nn.Module):
         posterior_log_variance_clipped = extract(self.posterior_log_variance_clipped, t, x_t.shape)
         return posterior_mean, posterior_variance, posterior_log_variance_clipped
     
-    def output(self, x, t, padding_masks=None):
-        trend, season = self.model(x, t, padding_masks=padding_masks)
+    def output(self, x, t, padding_masks=None,label=None):
+        trend, season = self.model(x, t, padding_masks=padding_masks,label=label)
         model_output = trend + season
         return model_output
 
-    def model_predictions(self, x, t, clip_x_start=False, padding_masks=None):
+    def model_predictions(self, x, t, clip_x_start=False, padding_masks=None,label=None):
         if padding_masks is None:
             padding_masks = torch.ones(x.shape[0], self.seq_length, dtype=bool, device=x.device)
 
         maybe_clip = partial(torch.clamp, min=-1., max=1.) if clip_x_start else identity
-        x_start = self.output(x, t, padding_masks)
+        x_start = self.output(x, t, padding_masks,label=label)
         x_start = maybe_clip(x_start)
         pred_noise = self.predict_noise_from_start(x, t, x_start)
         return pred_noise, x_start
 
-    def p_mean_variance(self, x, t, clip_denoised=True):
-        _, x_start = self.model_predictions(x, t)
+    def p_mean_variance(self, x, t, clip_denoised=True,label=None):
+        _, x_start = self.model_predictions(x, t,label=label)
         if clip_denoised:
             x_start.clamp_(-1., 1.)
         model_mean, posterior_variance, posterior_log_variance = \
             self.q_posterior(x_start=x_start, x_t=x, t=t)
         return model_mean, posterior_variance, posterior_log_variance, x_start
 
-    def p_sample(self, x, t: int, clip_denoised=True):
+    def p_sample(self, x, t: int, clip_denoised=True,label=None):
         batched_times = torch.full((x.shape[0],), t, device=x.device, dtype=torch.long)
         model_mean, _, model_log_variance, x_start = \
-            self.p_mean_variance(x=x, t=batched_times, clip_denoised=clip_denoised)
+            self.p_mean_variance(x=x, t=batched_times, clip_denoised=clip_denoised,label=label)
         noise = torch.randn_like(x) if t > 0 else 0.  # no noise if t == 0
         pred_img = model_mean + (0.5 * model_log_variance).exp() * noise
         return pred_img, x_start
 
     @torch.no_grad()
-    def sample(self, shape):
+    def sample(self, shape,use_label=False):
         device = self.betas.device
         img = torch.randn(shape, device=device)
+        label = torch.randint(low=0,high=self.label_dim,size=(shape[0],)) if use_label else None
         for t in reversed(range(0, self.num_timesteps)):
-            img, _ = self.p_sample(img, t)
+            img, _ = self.p_sample(img, t,label=label)
         return img
 
     @torch.no_grad()
-    def fast_sample(self, shape, clip_denoised=True):
+    def fast_sample(self, shape, clip_denoised=True,use_label=False):
         batch, device, total_timesteps, sampling_timesteps, eta = \
             shape[0], self.betas.device, self.num_timesteps, self.sampling_timesteps, self.eta
 
@@ -195,10 +197,10 @@ class Diffusion_TS(nn.Module):
         times = list(reversed(times.int().tolist()))
         time_pairs = list(zip(times[:-1], times[1:]))  # [(T-1, T-2), (T-2, T-3), ..., (1, 0), (0, -1)]
         img = torch.randn(shape, device=device)
-
+        label = torch.randint(low=0,high=self.label_dim,size=(shape[0],)) if use_label else None
         for time, time_next in tqdm(time_pairs, desc='sampling loop time step'):
             time_cond = torch.full((batch,), time, device=device, dtype=torch.long)
-            pred_noise, x_start, *_ = self.model_predictions(img, time_cond, clip_x_start=clip_denoised)
+            pred_noise, x_start, *_ = self.model_predictions(img, time_cond, clip_x_start=clip_denoised,label=label)
 
             if time_next < 0:
                 img = x_start
@@ -215,10 +217,10 @@ class Diffusion_TS(nn.Module):
 
         return img
 
-    def generate_mts(self, batch_size=16):
+    def generate_mts(self, batch_size=16,use_label=False):
         feature_size, seq_length = self.feature_size, self.seq_length
         sample_fn = self.fast_sample if self.fast_sampling else self.sample
-        return sample_fn((batch_size, seq_length, feature_size))
+        return sample_fn((batch_size, seq_length, feature_size),use_label=use_label)
 
     @property
     def loss_fn(self):

@@ -114,7 +114,7 @@ class Trainer:
         num_cycle = int(num // size_every) + 1
 
         for _ in tqdm(range(num_cycle)):
-            sample = self.ema.ema_model.generate_mts(batch_size=size_every)
+            sample = self.ema.ema_model.generate_mts(batch_size=size_every,use_label=self.args.use_label)
             samples = np.row_stack([samples , sample.detach().cpu().numpy()])
             torch.cuda.empty_cache()
 
