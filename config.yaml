@@ -3,11 +3,11 @@ model:
   params:
     seq_length: 512
     feature_size: 9
-    n_layer_enc: 1
-    n_layer_dec: 2
+    n_layer_enc: 4
+    n_layer_dec: 4
     d_model: 64  # 4 X 16
-    timesteps: 512
-    sampling_timesteps: 512
+    timesteps: 1024
+    sampling_timesteps: 1024
     loss_type: 'l1'
     beta_schedule: 'cosine'
     n_heads: 4
@@ -16,10 +16,11 @@ model:
     resid_pd: 0.1
     kernel_size: 5
     padding_size: 2
+    label_dim: 5
 
 solver:
   base_lr: 1.0e-5
-  max_epochs: 1000
+  max_epochs: 30000
   results_folder: ./Checkpoints
   gradient_accumulate_every: 2
   save_cycle: 100  # max_epochs // 10
