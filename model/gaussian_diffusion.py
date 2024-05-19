@@ -58,7 +58,9 @@ class Diffusion_TS(nn.Module):
         self.label_dim = label_dim
 
         self.model = instantiate_from_config(configs['backbone'],
-                                             n_feat=feature_size,n_channel=seq_length,label_dim=label_dim,max_len=seq_length)
+                                             n_feat=feature_size,n_channel=seq_length,
+                                             label_dim=label_dim,max_len=seq_length,
+                                             mamba_config=configs['mamba'])
 
         if beta_schedule == 'linear':
             betas = linear_beta_schedule(timesteps)

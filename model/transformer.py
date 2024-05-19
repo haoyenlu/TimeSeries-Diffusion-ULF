@@ -7,7 +7,7 @@ from torch import nn
 from einops import rearrange, reduce, repeat
 from model.model_utils import LearnablePositionalEncoding, Conv_MLP, AdaLayerNorm, Transpose, GELU2, series_decomp
 
-from model.mamba_model import ResidualBlock as MambaBlock
+from model.mamba_model import MambaBlock, RMSNorm
 
 class TrendBlock(nn.Module):
     """
@@ -156,7 +156,7 @@ class FullAttention(nn.Module):
 
         # output projection
         y = self.resid_drop(self.proj(y))
-        return y, att
+        return y
 
 
 class CrossAttention(nn.Module):
@@ -201,6 +201,8 @@ class CrossAttention(nn.Module):
         return y, att
     
 
+
+
 class EncoderBlock(nn.Module):
     """ an unassuming Transformer block """
     def __init__(self,
@@ -209,17 +211,30 @@ class EncoderBlock(nn.Module):
                  attn_pdrop=0.1,
                  resid_pdrop=0.1,
                  mlp_hidden_times=4,
-                 activate='GELU'
+                 activate='GELU',
+                 use_mamba=False,
+                 mamba_config=None,
                  ):
         super().__init__()
 
         self.ln1 = AdaLayerNorm(n_embd)
         self.ln2 = nn.LayerNorm(n_embd)
-        self.attn = FullAttention(
+
+        if not use_mamba:
+            self.attn = FullAttention(
                 n_embd=n_embd,
                 n_head=n_head,
                 attn_pdrop=attn_pdrop,
                 resid_pdrop=resid_pdrop,
+            )
+
+        else:
+            self.attn = MambaBlock(
+                d_model=n_embd,
+                d_inner=mamba_config['d_inner'],
+                d_conv=mamba_config['d_conv'],
+                dt_rank=mamba_config['dt_rank'],
+                d_state=mamba_config['d_state']
             )
         
         assert activate in ['GELU', 'GELU2']
@@ -233,10 +248,11 @@ class EncoderBlock(nn.Module):
             )
         
     def forward(self, x, timestep, mask=None, label_emb=None):
-        a, att = self.attn(self.ln1(x, timestep, label_emb), mask=mask)
+        a= self.attn(self.ln1(x, timestep, label_emb), mask=mask)
         x = x + a
         x = x + self.mlp(self.ln2(x))   # only one really use encoder_output
-        return x, att
+        return x
+
 
 
 class Encoder(nn.Module):
@@ -249,6 +265,8 @@ class Encoder(nn.Module):
         resid_pdrop=0.,
         mlp_hidden_times=4,
         block_activate='GELU',
+        use_mamba=False,
+        mamba_config=None,
     ):
         super().__init__()
 
@@ -259,12 +277,14 @@ class Encoder(nn.Module):
                 resid_pdrop=resid_pdrop,
                 mlp_hidden_times=mlp_hidden_times,
                 activate=block_activate,
+                use_mamba=use_mamba,
+                mamba_config=mamba_config
         ) for _ in range(n_layer)])
 
     def forward(self, input, t, padding_masks=None, label_emb=None):
         x = input
         for block_idx in range(len(self.blocks)):
-            x, _ = self.blocks[block_idx](x, t, mask=padding_masks, label_emb=label_emb)
+            x = self.blocks[block_idx](x, t, mask=padding_masks, label_emb=label_emb)
         return x
 
 
@@ -280,18 +300,31 @@ class DecoderBlock(nn.Module):
                  mlp_hidden_times=4,
                  activate='GELU',
                  condition_dim=1024,
+                 use_mamba=False,
+                 mamba_config=None,
                  ):
         super().__init__()
         
         self.ln1 = AdaLayerNorm(n_embd)
         self.ln2 = nn.LayerNorm(n_embd)
 
-        self.attn1 = FullAttention(
+        if not use_mamba:
+            self.attn1 = FullAttention(
                 n_embd=n_embd,
                 n_head=n_head,
                 attn_pdrop=attn_pdrop, 
                 resid_pdrop=resid_pdrop,
                 )
+        else:
+            self.attn = MambaBlock(
+                d_model=n_embd,
+                d_inner=mamba_config['d_inner'],
+                d_conv=mamba_config['d_conv'],
+                dt_rank=mamba_config['dt_rank'],
+                d_state=mamba_config['d_state']
+            )
+            
+
         self.attn2 = CrossAttention(
                 n_embd=n_embd,
                 condition_embd=condition_dim,
@@ -321,7 +354,7 @@ class DecoderBlock(nn.Module):
         self.linear = nn.Linear(n_embd, n_feat)
 
     def forward(self, x, encoder_output, timestep, mask=None, label_emb=None):
-        a, att = self.attn1(self.ln1(x, timestep, label_emb), mask=mask)
+        a = self.attn1(self.ln1(x, timestep, label_emb), mask=mask)
         x = x + a
         a, att = self.attn2(self.ln1_1(x, timestep), encoder_output, mask=mask)
         x = x + a
@@ -344,7 +377,9 @@ class Decoder(nn.Module):
         resid_pdrop=0.1,
         mlp_hidden_times=4,
         block_activate='GELU',
-        condition_dim=512    
+        condition_dim=512,
+        use_mamba=False,
+        mamba_config=None,  
     ):
       super().__init__()
       self.d_model = n_embd
@@ -359,6 +394,8 @@ class Decoder(nn.Module):
                 mlp_hidden_times=mlp_hidden_times,
                 activate=block_activate,
                 condition_dim=condition_dim,
+                use_mamba=use_mamba,
+                mamba_config=mamba_config,
         ) for _ in range(n_layer)])
       
     def forward(self, x, t, enc, padding_masks=None, label_emb=None):
@@ -395,6 +432,8 @@ class Transformer(nn.Module):
         kernel_size=5,
         padding =2,
         label_dim=None,
+        use_mamba=False,
+        mamba_config=None,
         **kwargs
     ):
         super().__init__()
@@ -410,11 +449,11 @@ class Transformer(nn.Module):
         self.combine_m = nn.Conv1d(n_layer_dec, 1, kernel_size=1, stride=1, padding=0,
                                    padding_mode='circular', bias=False)
 
-        self.encoder = Encoder(n_layer_enc, d_model, n_heads, attn_pdrop, resid_pdrop, mlp_hidden_times, block_activate)
+        self.encoder = Encoder(n_layer_enc, d_model, n_heads, attn_pdrop, resid_pdrop, mlp_hidden_times, block_activate,use_mamba=use_mamba,mamba_config=mamba_config)
         self.pos_enc = LearnablePositionalEncoding(d_model, dropout=resid_pdrop, max_len=max_len)
 
         self.decoder = Decoder(n_channel, n_feat, d_model, n_heads, n_layer_dec, attn_pdrop, resid_pdrop, mlp_hidden_times,
-                               block_activate, condition_dim=d_model)
+                               block_activate, condition_dim=d_model,use_mamba=use_mamba,mamba_config=mamba_config)
         self.pos_dec = LearnablePositionalEncoding(d_model, dropout=resid_pdrop, max_len=max_len)
 
     def forward(self, input, t, label=None, padding_masks=None, return_res=False):

@@ -33,12 +33,11 @@ class ModelArgs:
 
 
 class ResidualBlock(nn.Module):
-    def __init__(self, args: ModelArgs):
+    def __init__(self,d_model,d_inner,d_conv,dt_rank,d_state,linear_bias,conv_bias):
         """Simple block wrapping Mamba block with normalization and residual connection."""
         super().__init__()
-        self.args = args
-        self.mixer = MambaBlock(args)
-        self.norm = RMSNorm(args.d_model)
+        self.mixer = MambaBlock(d_model,d_inner,d_conv,dt_rank,d_state,linear_bias,conv_bias)
+        self.norm = RMSNorm(d_model)
         
 
     def forward(self, x):
@@ -67,32 +66,31 @@ class ResidualBlock(nn.Module):
             
 
 class MambaBlock(nn.Module):
-    def __init__(self, args: ModelArgs):
+    def __init__(self, d_model,d_inner,d_conv,dt_rank,d_state,linear_bias,conv_bias):
         """A single Mamba block, as described in Figure 3 in Section 3.4 in the Mamba paper [1]."""
         super().__init__()
-        self.args = args
 
-        self.in_proj = nn.Linear(args.d_model, args.d_inner * 2, bias=args.bias)
+        self.in_proj = nn.Linear(d_model,d_inner * 2, bias=linear_bias)
 
         self.conv1d = nn.Conv1d(
-            in_channels=args.d_inner,
-            out_channels=args.d_inner,
-            bias=args.conv_bias,
-            kernel_size=args.d_conv,
-            groups=args.d_inner,
-            padding=args.d_conv - 1,
+            in_channels=d_inner,
+            out_channels=d_inner,
+            bias=conv_bias,
+            kernel_size=d_conv,
+            groups=d_inner,
+            padding=d_conv - 1,
         )
 
         # x_proj takes in `x` and outputs the input-specific Δ, B, C
-        self.x_proj = nn.Linear(args.d_inner, args.dt_rank + args.d_state * 2, bias=False)
+        self.x_proj = nn.Linear(d_inner, dt_rank + d_state * 2, bias=False)
         
         # dt_proj projects Δ from dt_rank to d_in
-        self.dt_proj = nn.Linear(args.dt_rank, args.d_inner, bias=True)
+        self.dt_proj = nn.Linear(dt_rank, d_inner, bias=True)
 
-        A = repeat(torch.arange(1, args.d_state + 1), 'n -> d n', d=args.d_inner)
+        A = repeat(torch.arange(1, d_state + 1), 'n -> d n', d=d_inner)
         self.A_log = nn.Parameter(torch.log(A))
-        self.D = nn.Parameter(torch.ones(args.d_inner))
-        self.out_proj = nn.Linear(args.d_inner, args.d_model, bias=args.bias)
+        self.D = nn.Parameter(torch.ones(d_inner))
+        self.out_proj = nn.Linear(d_inner, d_model, bias=linear_bias)
         
 
     def forward(self, x):
