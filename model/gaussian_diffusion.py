@@ -57,7 +57,7 @@ class Diffusion_TS(nn.Module):
         self.ff_weight = default(reg_weight, math.sqrt(self.seq_length) / 5)
         self.label_dim = label_dim
 
-        self.model = instantiate_from_config(config['model']['backbone'])
+        self.model = instantiate_from_config(config['backbone'])
 
         if beta_schedule == 'linear':
             betas = linear_beta_schedule(timesteps)
