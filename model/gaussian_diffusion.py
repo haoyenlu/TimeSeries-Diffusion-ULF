@@ -46,7 +46,7 @@ class Diffusion_TS(nn.Module):
             use_ff=True,
             reg_weight=None,
             label_dim=None,
-            config=None,
+            configs=None,
             **kwargs
     ):
         super(Diffusion_TS, self).__init__()
@@ -57,7 +57,7 @@ class Diffusion_TS(nn.Module):
         self.ff_weight = default(reg_weight, math.sqrt(self.seq_length) / 5)
         self.label_dim = label_dim
 
-        self.model = instantiate_from_config(config['backbone'],n_feat=feature_size,n_channel=seq_length,label_dim=label_dim)
+        self.model = instantiate_from_config(configs['backbone'],n_feat=feature_size,n_channel=seq_length,label_dim=label_dim)
 
         if beta_schedule == 'linear':
             betas = linear_beta_schedule(timesteps)
