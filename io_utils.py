@@ -27,7 +27,7 @@ def instantiate_from_config(config,**kwargs):
         raise KeyError("Expected key `target` to instantiate.")
     module, cls = config["target"].rsplit(".", 1)
     cls = getattr(importlib.import_module(module, package=None), cls)
-    return cls(**config.get("params", dict()),**kwargs)
+    return cls(**config.get("params", dict()),config=config,**kwargs)
 
 def seed_everything(seed):
     if seed is not None:

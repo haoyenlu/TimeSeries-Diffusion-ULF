@@ -33,7 +33,7 @@ def main():
 
     config = load_yaml_config(args.config)
     
-    model = instantiate_from_config(config['model'],config=config).cuda()
+    model = instantiate_from_config(config['model']).cuda()
 
     dataloader = build_dataloader(config,args)
     trainer = Trainer(config=config,args=args,model=model,dataloader=dataloader)
