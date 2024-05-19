@@ -10,8 +10,8 @@ model:
     label_dim: 5
 
   backbone:
+    target: model.transformer.Transformer
     params:
-      target: model.transformer.Transformer
         n_feat: 9
         n_channel: 512 # sequence length
         n_layer_enc: 4
