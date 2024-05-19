@@ -141,7 +141,7 @@ class FullAttention(nn.Module):
         self.proj = nn.Linear(n_embd, n_embd)
         self.n_head = n_head
 
-    def forward(self, x, mask=None):
+    def forward(self, x):
         B, T, C = x.size()
         k = self.key(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # (B, nh, T, hs)
         q = self.query(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # (B, nh, T, hs)
@@ -249,8 +249,8 @@ class EncoderBlock(nn.Module):
                 nn.Dropout(resid_pdrop),
             )
         
-    def forward(self, x, timestep, mask=None, label_emb=None):
-        a= self.attn(self.ln1(x, timestep, label_emb), mask=mask)
+    def forward(self, x, timestep, label_emb=None):
+        a= self.attn(self.ln1(x, timestep, label_emb))
         x = x + a
         x = x + self.mlp(self.ln2(x))   # only one really use encoder_output
         return x
@@ -286,7 +286,7 @@ class Encoder(nn.Module):
     def forward(self, input, t, padding_masks=None, label_emb=None):
         x = input
         for block_idx in range(len(self.blocks)):
-            x = self.blocks[block_idx](x, t, mask=padding_masks, label_emb=label_emb)
+            x = self.blocks[block_idx](x, t, label_emb=label_emb)
         return x
 
 
@@ -358,7 +358,7 @@ class DecoderBlock(nn.Module):
         self.linear = nn.Linear(n_embd, n_feat)
 
     def forward(self, x, encoder_output, timestep, mask=None, label_emb=None):
-        a = self.attn1(self.ln1(x, timestep, label_emb), mask=mask)
+        a = self.attn1(self.ln1(x, timestep, label_emb))
         x = x + a
         a, att = self.attn2(self.ln1_1(x, timestep), encoder_output, mask=mask)
         x = x + a
