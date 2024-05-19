@@ -318,7 +318,7 @@ class DecoderBlock(nn.Module):
                 resid_pdrop=resid_pdrop,
                 )
         else:
-            self.attn = MambaBlock(
+            self.attn1 = MambaBlock(
                 d_model=n_embd,
                 d_inner=mamba_config['d_inner'],
                 d_conv=mamba_config['d_conv'],
