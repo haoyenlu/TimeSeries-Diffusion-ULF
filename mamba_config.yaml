@@ -7,7 +7,7 @@ model:
     sampling_timesteps: 1024
     loss_type: 'l1'
     beta_schedule: 'cosine'
-    label_dim: 5
+    label_dim: 30
 
   backbone:
     target: model.transformer.Transformer
@@ -19,7 +19,6 @@ model:
         mlp_hidden_times: 4
         attn_pdrop: 0.1
         resit_pdrop: 0.1
-        max_len: 512
         kernel_size: 5
         padding_size: 2
 
