@@ -234,7 +234,9 @@ class EncoderBlock(nn.Module):
                 d_inner=mamba_config['d_inner'],
                 d_conv=mamba_config['d_conv'],
                 dt_rank=mamba_config['dt_rank'],
-                d_state=mamba_config['d_state']
+                d_state=mamba_config['d_state'],                
+                linear_bias= mamba_config['linear_bias'],
+                conv_bias= mamba_config['conv_bias']
             )
         
         assert activate in ['GELU', 'GELU2']
@@ -321,7 +323,9 @@ class DecoderBlock(nn.Module):
                 d_inner=mamba_config['d_inner'],
                 d_conv=mamba_config['d_conv'],
                 dt_rank=mamba_config['dt_rank'],
-                d_state=mamba_config['d_state']
+                d_state=mamba_config['d_state'],
+                linear_bias= mamba_config['linear_bias'],
+                conv_bias= mamba_config['conv_bias']
             )
             
 
