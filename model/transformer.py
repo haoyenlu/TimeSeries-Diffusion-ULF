@@ -7,7 +7,7 @@ from torch import nn
 from einops import rearrange, reduce, repeat
 from model.model_utils import LearnablePositionalEncoding, Conv_MLP, AdaLayerNorm, Transpose, GELU2, series_decomp
 
-from model.mamba_model import ResidualBLock as MambaBlock
+from model.mamba_model import ResidualBlock as MambaBlock
 
 class TrendBlock(nn.Module):
     """

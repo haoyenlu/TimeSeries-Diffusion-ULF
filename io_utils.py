@@ -20,14 +20,14 @@ def save_config_to_yaml(config, path):
         f.write(yaml.dump(config))
         f.close()
 
-def instantiate_from_config(config):
+def instantiate_from_config(config,**kwargs):
     if config is None:
         return None
     if not "target" in config:
         raise KeyError("Expected key `target` to instantiate.")
     module, cls = config["target"].rsplit(".", 1)
     cls = getattr(importlib.import_module(module, package=None), cls)
-    return cls(**config.get("params", dict()),config=config)
+    return cls(**config.get("params", dict()),**kwargs)
 
 def seed_everything(seed):
     if seed is not None:
