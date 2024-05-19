@@ -8,6 +8,7 @@ from tqdm.auto import tqdm
 from functools import partial
 from model.transformer import Transformer
 from model.model_utils import default, identity, extract
+from io_utils import instantiate_from_config
 
 
 # gaussian diffusion trainer class
@@ -37,23 +38,15 @@ class Diffusion_TS(nn.Module):
             self,
             seq_length,
             feature_size,
-            n_layer_enc=3,
-            n_layer_dec=6,
-            d_model=None,
             timesteps=1000,
             sampling_timesteps=None,
             loss_type='l1',
             beta_schedule='cosine',
-            n_heads=4,
-            mlp_hidden_times=4,
             eta=0.,
-            attn_pd=0.,
-            resid_pd=0.,
-            kernel_size=None,
-            padding_size=None,
             use_ff=True,
             reg_weight=None,
             label_dim=None,
+            config=None,
             **kwargs
     ):
         super(Diffusion_TS, self).__init__()
@@ -64,9 +57,7 @@ class Diffusion_TS(nn.Module):
         self.ff_weight = default(reg_weight, math.sqrt(self.seq_length) / 5)
         self.label_dim = label_dim
 
-        self.model = Transformer(n_feat=feature_size, n_channel=seq_length, n_layer_enc=n_layer_enc, n_layer_dec=n_layer_dec,
-                                 n_heads=n_heads, attn_pdrop=attn_pd, resid_pdrop=resid_pd, mlp_hidden_times=mlp_hidden_times,
-                                 max_len=seq_length, n_embd=d_model, conv_params=[kernel_size, padding_size], label_dim=label_dim, **kwargs)
+        self.model = instantiate_from_config(config['model']['backbone'])
 
         if beta_schedule == 'linear':
             betas = linear_beta_schedule(timesteps)

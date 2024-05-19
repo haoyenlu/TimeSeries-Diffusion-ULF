@@ -7,6 +7,8 @@ from torch import nn
 from einops import rearrange, reduce, repeat
 from model.model_utils import LearnablePositionalEncoding, Conv_MLP, AdaLayerNorm, Transpose, GELU2, series_decomp
 
+from model.mamba_model import ResidualBLock as MambaBlock
+
 class TrendBlock(nn.Module):
     """
     Model trend of time series using the polynomial regressor.
@@ -383,44 +385,37 @@ class Transformer(nn.Module):
         n_channel,
         n_layer_enc=5,
         n_layer_dec=14,
-        n_embd=1024,
+        d_model=1024,
         n_heads=16,
         attn_pdrop=0.1,
         resid_pdrop=0.1,
         mlp_hidden_times=4,
         block_activate='GELU',
         max_len=2048,
-        conv_params=None,
+        kernel_size=5,
+        padding =2,
         label_dim=None,
         **kwargs
     ):
         super().__init__()
-        self.emb = Conv_MLP(n_feat, n_embd, resid_pdrop=resid_pdrop)
-        self.inverse = Conv_MLP(n_embd, n_feat, resid_pdrop=resid_pdrop)
+        self.emb = Conv_MLP(n_feat, d_model, resid_pdrop=resid_pdrop)
+        self.inverse = Conv_MLP(d_model, n_feat, resid_pdrop=resid_pdrop)
 
         if label_dim is not None:
-            self.label_emb = nn.Embedding(label_dim,n_embd)
+            self.label_emb = nn.Embedding(label_dim,d_model)
             
 
-        if conv_params is None or conv_params[0] is None:
-            if n_feat < 32 and n_channel < 64:
-                kernel_size, padding = 1, 0
-            else:
-                kernel_size, padding = 5, 2
-        else:
-            kernel_size, padding = conv_params
-
-        self.combine_s = nn.Conv1d(n_embd, n_feat, kernel_size=kernel_size, stride=1, padding=padding,
+        self.combine_s = nn.Conv1d(d_model, n_feat, kernel_size=kernel_size, stride=1, padding=padding,
                                    padding_mode='circular', bias=False)
         self.combine_m = nn.Conv1d(n_layer_dec, 1, kernel_size=1, stride=1, padding=0,
                                    padding_mode='circular', bias=False)
 
-        self.encoder = Encoder(n_layer_enc, n_embd, n_heads, attn_pdrop, resid_pdrop, mlp_hidden_times, block_activate)
-        self.pos_enc = LearnablePositionalEncoding(n_embd, dropout=resid_pdrop, max_len=max_len)
+        self.encoder = Encoder(n_layer_enc, d_model, n_heads, attn_pdrop, resid_pdrop, mlp_hidden_times, block_activate)
+        self.pos_enc = LearnablePositionalEncoding(d_model, dropout=resid_pdrop, max_len=max_len)
 
-        self.decoder = Decoder(n_channel, n_feat, n_embd, n_heads, n_layer_dec, attn_pdrop, resid_pdrop, mlp_hidden_times,
-                               block_activate, condition_dim=n_embd)
-        self.pos_dec = LearnablePositionalEncoding(n_embd, dropout=resid_pdrop, max_len=max_len)
+        self.decoder = Decoder(n_channel, n_feat, d_model, n_heads, n_layer_dec, attn_pdrop, resid_pdrop, mlp_hidden_times,
+                               block_activate, condition_dim=d_model)
+        self.pos_dec = LearnablePositionalEncoding(d_model, dropout=resid_pdrop, max_len=max_len)
 
     def forward(self, input, t, label=None, padding_masks=None, return_res=False):
         emb = self.emb(input)
@@ -445,7 +440,3 @@ class Transformer(nn.Module):
             return trend, self.combine_s(season.transpose(1, 2)).transpose(1, 2), res - res_m
 
         return trend, season_error
-
-
-if __name__ == '__main__':
-    pass
