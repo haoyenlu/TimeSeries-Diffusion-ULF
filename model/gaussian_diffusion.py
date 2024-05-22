@@ -180,7 +180,7 @@ class Diffusion_TS(nn.Module):
             hand_label = torch.randint(low=0,high=2,size=(shape[0],),device=device)[:,None]
             affected_label = torch.randint(low=0,high=2,size=(shape[0],),device=device)[:,None]
             severity_label = F.one_hot(torch.randint(low=0,high=3,size=(shape[0],),device=device),num_classes=3)
-            label = torch.cat([task_label,hand_label,affected_label,severity_label],axis=1)
+            label = torch.cat([task_label,hand_label,affected_label,severity_label],axis=1).float()
 
         # label = torch.randint(low=0,high=self.label_dim,size=(shape[0],),device=device) if use_label else None
         for t in reversed(range(0, self.num_timesteps)):
