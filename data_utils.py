@@ -8,7 +8,7 @@ def build_dataloader(config,args):
 
     if args.use_label:
         _ , label_dim = numpy_data['label'].shape
-        assert label_dim == config['model']['param']['label_dim'], "Label Size doesn't match with config"
+        assert label_dim == config['model']['params']['label_dim'], "Label Size doesn't match with config"
 
         dataset = []
         for data,label in zip(numpy_data['data'],numpy_data['label']):
