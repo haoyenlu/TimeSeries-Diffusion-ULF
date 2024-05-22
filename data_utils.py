@@ -7,7 +7,7 @@ def build_dataloader(config,args):
     assert seq_len == config['model']['params']['seq_length'] and config['model']['params']['feature_size'] == feat, "Sequence Length or Feature Size doesn't match with config"
 
     if args.use_label:
-        _ , label_dim = numpy_data['label']
+        _ , label_dim = numpy_data['label'].shape
         assert label_dim == config['model']['param']['label_dim'], "Label Size doesn't match with config"
 
         dataset = []
