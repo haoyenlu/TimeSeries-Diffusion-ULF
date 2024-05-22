@@ -12,7 +12,7 @@ def build_dataloader(config,args):
 
         dataset = []
         for data,label in zip(numpy_data['data'],numpy_data['label']):
-            dataset.append([data.transpose(1,0),label.long()])
+            dataset.append([data.transpose(1,0),label.astype(int)])
     else:
         dataset = numpy_data['data'].transpose(0,2,1)
 
