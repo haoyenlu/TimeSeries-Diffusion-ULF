@@ -175,7 +175,14 @@ class Diffusion_TS(nn.Module):
     def sample(self, shape,use_label=False):
         device = self.betas.device
         img = torch.randn(shape, device=device)
-        label = torch.randint(low=0,high=self.label_dim,size=(shape[0],),device=device) if use_label else None
+        if use_label:
+            task_label = F.one_hot(torch.randint(low=0,high=30,size=(shape[0],),device=device),num_classes=30)
+            hand_label = torch.randint(low=0,high=2,size=(shape[0],),device=device)[:,None]
+            affected_label = torch.randint(low=0,high=2,size=(shape[0],),device=device)[:,None]
+            severity_label = F.one_hot(torch.randint(low=0,high=3,size=(shape[0],),device=device),num_classes=3)
+            label = torch.cat([task_label,hand_label,affected_label,severity_label],axis=1)
+
+        # label = torch.randint(low=0,high=self.label_dim,size=(shape[0],),device=device) if use_label else None
         for t in reversed(range(0, self.num_timesteps)):
             img, _ = self.p_sample(img, t,label=label)
 
