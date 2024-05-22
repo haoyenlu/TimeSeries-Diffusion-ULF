@@ -445,7 +445,7 @@ class Transformer(nn.Module):
         self.inverse = Conv_MLP(d_model, n_feat, resid_pdrop=resid_pdrop)
 
         if label_dim is not None:
-            self.label_emb = nn.Embedding(label_dim,d_model)
+            self.label_emb = nn.Linear(label_dim,d_model)
             
 
         self.combine_s = nn.Conv1d(d_model, n_feat, kernel_size=kernel_size, stride=1, padding=padding,
