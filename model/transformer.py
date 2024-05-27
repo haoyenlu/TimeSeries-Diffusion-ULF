@@ -7,7 +7,6 @@ from torch import nn
 from einops import rearrange, reduce, repeat
 from model.model_utils import LearnablePositionalEncoding, Conv_MLP, AdaLayerNorm, Transpose, GELU2, series_decomp
 
-from model.mamba_model import MambaBlock, RMSNorm
 
 class TrendBlock(nn.Module):
     """
@@ -220,24 +219,13 @@ class EncoderBlock(nn.Module):
         self.ln1 = AdaLayerNorm(n_embd)
         self.ln2 = nn.LayerNorm(n_embd)
 
-        if not use_mamba:
-            self.attn = FullAttention(
-                n_embd=n_embd,
-                n_head=n_head,
-                attn_pdrop=attn_pdrop,
-                resid_pdrop=resid_pdrop,
-            )
+        self.attn = FullAttention(
+            n_embd=n_embd,
+            n_head=n_head,
+            attn_pdrop=attn_pdrop,
+            resid_pdrop=resid_pdrop,
+        )
 
-        else:
-            self.attn = MambaBlock(
-                d_model=n_embd,
-                d_inner=mamba_config['d_inner'],
-                d_conv=mamba_config['d_conv'],
-                dt_rank=mamba_config['dt_rank'],
-                d_state=mamba_config['d_state'],                
-                linear_bias= mamba_config['linear_bias'],
-                conv_bias= mamba_config['conv_bias']
-            )
         
         assert activate in ['GELU', 'GELU2']
         act = nn.GELU() if activate == 'GELU' else GELU2()
@@ -310,33 +298,22 @@ class DecoderBlock(nn.Module):
         self.ln1 = AdaLayerNorm(n_embd)
         self.ln2 = nn.LayerNorm(n_embd)
 
-        if not use_mamba:
-            self.attn1 = FullAttention(
-                n_embd=n_embd,
-                n_head=n_head,
-                attn_pdrop=attn_pdrop, 
-                resid_pdrop=resid_pdrop,
-                )
-        else:
-            self.attn1 = MambaBlock(
-                d_model=n_embd,
-                d_inner=mamba_config['d_inner'],
-                d_conv=mamba_config['d_conv'],
-                dt_rank=mamba_config['dt_rank'],
-                d_state=mamba_config['d_state'],
-                linear_bias= mamba_config['linear_bias'],
-                conv_bias= mamba_config['conv_bias']
+        self.attn1 = FullAttention(
+            n_embd=n_embd,
+            n_head=n_head,
+            attn_pdrop=attn_pdrop, 
+            resid_pdrop=resid_pdrop,
             )
             
 
         self.attn2 = CrossAttention(
-                n_embd=n_embd,
-                condition_embd=condition_dim,
-                n_head=n_head,
-                attn_pdrop=attn_pdrop,
-                resid_pdrop=resid_pdrop,
-                )
-        
+            n_embd=n_embd,
+            condition_embd=condition_dim,
+            n_head=n_head,
+            attn_pdrop=attn_pdrop,
+            resid_pdrop=resid_pdrop,
+            )
+    
         self.ln1_1 = AdaLayerNorm(n_embd)
 
         assert activate in ['GELU', 'GELU2']
