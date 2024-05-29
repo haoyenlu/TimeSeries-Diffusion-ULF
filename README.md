@@ -1,4 +1,4 @@
-# Interpretable Diffusion model for motion generation
+# Time-series Diffusion model for stroke motion generation
 
 Original author: https://github.com/Y-debug-sys/Diffusion-TS/tree/main
 
