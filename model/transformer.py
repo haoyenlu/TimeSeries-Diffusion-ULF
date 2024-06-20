@@ -401,8 +401,6 @@ class Transformer(nn.Module):
         kernel_size=5,
         padding =2,
         label_dim=None,
-        use_mamba=False,
-        mamba_config=None,
         **kwargs
     ):
         super().__init__()
@@ -418,11 +416,11 @@ class Transformer(nn.Module):
         self.combine_m = nn.Conv1d(n_layer_dec, 1, kernel_size=1, stride=1, padding=0,
                                    padding_mode='circular', bias=False)
 
-        self.encoder = Encoder(n_layer_enc, d_model, n_heads, attn_pdrop, resid_pdrop, mlp_hidden_times, block_activate,use_mamba=use_mamba,mamba_config=mamba_config)
+        self.encoder = Encoder(n_layer_enc, d_model, n_heads, attn_pdrop, resid_pdrop, mlp_hidden_times, block_activate)
         self.pos_enc = LearnablePositionalEncoding(d_model, dropout=resid_pdrop, max_len=max_len)
 
         self.decoder = Decoder(n_channel, n_feat, d_model, n_heads, n_layer_dec, attn_pdrop, resid_pdrop, mlp_hidden_times,
-                               block_activate, condition_dim=d_model,use_mamba=use_mamba,mamba_config=mamba_config)
+                               block_activate, condition_dim=d_model)
         self.pos_dec = LearnablePositionalEncoding(d_model, dropout=resid_pdrop, max_len=max_len)
 
     def forward(self, input, t, label=None, padding_masks=None, return_res=False):
