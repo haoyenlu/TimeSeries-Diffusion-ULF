@@ -211,8 +211,6 @@ class EncoderBlock(nn.Module):
                  resid_pdrop=0.1,
                  mlp_hidden_times=4,
                  activate='GELU',
-                 use_mamba=False,
-                 mamba_config=None,
                  ):
         super().__init__()
 
@@ -254,9 +252,7 @@ class Encoder(nn.Module):
         attn_pdrop=0.,
         resid_pdrop=0.,
         mlp_hidden_times=4,
-        block_activate='GELU',
-        use_mamba=False,
-        mamba_config=None,
+        block_activate='GELU'
     ):
         super().__init__()
 
@@ -266,9 +262,7 @@ class Encoder(nn.Module):
                 attn_pdrop=attn_pdrop,
                 resid_pdrop=resid_pdrop,
                 mlp_hidden_times=mlp_hidden_times,
-                activate=block_activate,
-                use_mamba=use_mamba,
-                mamba_config=mamba_config
+                activate=block_activate
         ) for _ in range(n_layer)])
 
     def forward(self, input, t, padding_masks=None, label_emb=None):
@@ -290,8 +284,6 @@ class DecoderBlock(nn.Module):
                  mlp_hidden_times=4,
                  activate='GELU',
                  condition_dim=1024,
-                 use_mamba=False,
-                 mamba_config=None,
                  ):
         super().__init__()
         
@@ -358,9 +350,7 @@ class Decoder(nn.Module):
         resid_pdrop=0.1,
         mlp_hidden_times=4,
         block_activate='GELU',
-        condition_dim=512,
-        use_mamba=False,
-        mamba_config=None,  
+        condition_dim=512, 
     ):
       super().__init__()
       self.d_model = n_embd
@@ -375,8 +365,6 @@ class Decoder(nn.Module):
                 mlp_hidden_times=mlp_hidden_times,
                 activate=block_activate,
                 condition_dim=condition_dim,
-                use_mamba=use_mamba,
-                mamba_config=mamba_config,
         ) for _ in range(n_layer)])
       
     def forward(self, x, t, enc, padding_masks=None, label_emb=None):
