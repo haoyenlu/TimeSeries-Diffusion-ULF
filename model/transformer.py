@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 from torch import nn
 from einops import rearrange, reduce, repeat
-from model.model_utils import LearnablePositionalEncoding, Conv_MLP, AdaLayerNorm, Transpose, GELU2, series_decomp
+from model.model_utils import LearnablePositionalEncoding, Conv_MLP, AdaLayerNorm, Transpose, GELU2, series_decomp, SinusoidalPosEmb
 
 
 class TrendBlock(nn.Module):
@@ -408,10 +408,7 @@ class Transformer(nn.Module):
         self.inverse = Conv_MLP(d_model, n_feat, resid_pdrop=resid_pdrop)
 
         if label_dim is not None:
-            self.label_emb = nn.Sequential(
-                nn.Linear(label_dim,d_model*2),
-                nn.Linear(d_model*2,d_model)
-            )
+            self.label_emb = SinusoidalPosEmb(d_model)
             # self.label_emb = nn.Linear(label_dim,d_model)
             
 
