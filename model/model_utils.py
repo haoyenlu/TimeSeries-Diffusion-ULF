@@ -171,10 +171,8 @@ class AdaLayerNorm(nn.Module):
         self.linear = nn.Linear(n_embd,n_embd * 2)
         self.layernorm = nn.LayerNorm(n_embd,elementwise_affine=False)
     
-    def forward(self,x,timestep,label_emb = None):
+    def forward(self,x,timestep):
         emb = self.emb(timestep)
-        if label_emb is not None:
-            emb = emb + label_emb
         emb = self.linear(self.silu(emb)).unsqueeze(1)
         scale, shift = torch.chunk(emb,2,dim=2)
         x = self.layernorm(x) * (1 + scale) + shift

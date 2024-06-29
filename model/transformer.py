@@ -236,7 +236,7 @@ class EncoderBlock(nn.Module):
             )
         
     def forward(self, x, timestep, label_emb=None):
-        a= self.attn(self.ln1(x, timestep, label_emb))
+        a= self.attn(self.ln1(x, timestep))
         x = x + a
         x = x + self.mlp(self.ln2(x))   # only one really use encoder_output
         return x
@@ -406,14 +406,7 @@ class Transformer(nn.Module):
         super().__init__()
         self.emb = Conv_MLP(n_feat, d_model, resid_pdrop=resid_pdrop)
         self.inverse = Conv_MLP(d_model, n_feat, resid_pdrop=resid_pdrop)
-
-        if label_dim is not None:
-            self.label_emb = nn.Sequential(
-                nn.Linear(label_dim,d_model*2),
-                nn.LeakyReLU(0.2),
-                nn.Linear(d_model*2,d_model)
-            )
-            # self.label_emb = nn.Linear(label_dim,d_model)
+        self.label_emb = nn.Linear(label_dim,d_model)
             
 
         self.combine_s = nn.Conv1d(d_model, n_feat, kernel_size=kernel_size, stride=1, padding=padding,
@@ -433,14 +426,12 @@ class Transformer(nn.Module):
         inp_enc = self.pos_enc(emb)
 
         if label is not None:
-            label_emb = self.label_emb(label)
-        else:
-            label_emb = None
+            inp_enc = inp_enc + self.label_emb(label)
 
-        enc_cond = self.encoder(inp_enc, t, padding_masks=padding_masks,label_emb = label_emb)
+        enc_cond = self.encoder(inp_enc, t, padding_masks=padding_masks)
 
         inp_dec = self.pos_dec(emb)
-        output, mean, trend, season = self.decoder(inp_dec, t, enc_cond, padding_masks=padding_masks,label_emb = label_emb)
+        output, mean, trend, season = self.decoder(inp_dec, t, enc_cond, padding_masks=padding_masks)
 
         res = self.inverse(output)
         res_m = torch.mean(res, dim=1, keepdim=True)
