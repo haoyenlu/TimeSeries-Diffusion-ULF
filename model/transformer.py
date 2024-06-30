@@ -424,11 +424,7 @@ class Transformer(nn.Module):
     def forward(self, input, t, label=None, padding_masks=None, return_res=False):
         emb = self.emb(input)
         inp_enc = self.pos_enc(emb)
-
-        if label is not None:
-            label_embedding = self.label_emb(label) 
-        else:
-            label_embedding = None
+        label_embedding = self.label_emb(label) if label  is not None else None
 
         enc_cond = self.encoder(inp_enc, t, padding_masks=padding_masks,label_emb=label_embedding)
 
