@@ -424,12 +424,12 @@ class Transformer(nn.Module):
     def forward(self, input, t, label=None, padding_masks=None, return_res=False):
         emb = self.emb(input)
         inp_enc = self.pos_enc(emb)
-        label_embedding = self.label_emb(label) if label else None
+        label_embedding = self.label_emb(label.astype(float)) if label  else None
 
         enc_cond = self.encoder(inp_enc, t, padding_masks=padding_masks,label_emb=label_embedding)
 
         inp_dec = self.pos_dec(emb)
-        output, mean, trend, season = self.decoder(inp_dec, t, enc_cond, padding_masks=padding_masks,label_emb=label_emb)
+        output, mean, trend, season = self.decoder(inp_dec, t, enc_cond, padding_masks=padding_masks,label_emb=label_embedding)
 
         res = self.inverse(output)
         res_m = torch.mean(res, dim=1, keepdim=True)
