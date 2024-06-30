@@ -424,6 +424,7 @@ class Transformer(nn.Module):
     def forward(self, input, t, label=None, padding_masks=None, return_res=False):
         emb = self.emb(input)
         inp_enc = self.pos_enc(emb)
+        print(inp_enc.shape)
 
         if label is not None:
             inp_enc = inp_enc + self.label_emb(label)
