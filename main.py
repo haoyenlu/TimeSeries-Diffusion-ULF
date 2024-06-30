@@ -35,11 +35,12 @@ def main():
     
     model = instantiate_from_config(config['model'],configs=config['model']).cuda()
 
-    dataloader = build_dataloader(config,args)
-    trainer = Trainer(config=config,args=args,model=model,dataloader=dataloader)
+
+    trainer = Trainer(config=config,args=args,model=model)
 
     if args.mode == 'train':
-        trainer.train()
+        dataloader = build_dataloader(config,args)
+        trainer.train(dataloader)
 
     elif args.mode == 'sample':
         trainer.load(args.milestone)

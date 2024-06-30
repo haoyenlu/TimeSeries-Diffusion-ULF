@@ -17,14 +17,13 @@ def cycle(dl):
             yield data
 
 class Trainer:
-    def __init__(self,config,args,model,dataloader,logger=None):
+    def __init__(self,config,args,model,logger=None):
         super().__init__()
         self.model = model
         self.device = model.betas.device
         self.train_num_epochs = config['solver']['max_epochs']
         self.gradient_accumulate_every = config['solver']['gradient_accumulate_every']
         self.save_cycle = config['solver']['save_cycle']
-        self.dl = cycle(dataloader)
         self.step = 0
         self.milestone = 0
         self.args = args
@@ -65,10 +64,10 @@ class Trainer:
         self.milestone = milestone
     
 
-    def train(self):
+    def train(self,dataloader):
         device = self.device
         step = 0
-
+        dl = cycle(dataloader)
         # track time
         tic = time.time()
 
@@ -78,10 +77,10 @@ class Trainer:
                 total_loss = 0
                 for _ in range(self.gradient_accumulate_every):
                     if self.args.use_label:
-                        temp = next(self.dl)
+                        temp = next(dl)
                         data, label = temp[0].float().to(device), temp[1].float().to(device)
                     else:
-                        data = next(self.dl).float().to(device)
+                        data = next(dl).float().to(device)
                         label = None
 
                     loss = self.model(data,target=data,label=label)
@@ -113,7 +112,7 @@ class Trainer:
         labels = np.empty([0,config['model']['params']['label_dim']])
         num = config['dataset']['samples']['num_sample']
         size_every = config['dataset']['samples']['size_every']
-        num_cycle = int(num // size_every) + 1
+        num_cycle = int(num // size_every)
 
 
         for _ in tqdm(range(num_cycle)):
