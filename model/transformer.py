@@ -236,7 +236,7 @@ class EncoderBlock(nn.Module):
             )
         
     def forward(self, x, timestep, label_emb=None):
-        a= self.attn(self.ln1(x, timestep))
+        a= self.attn(self.ln1(x, timestep,label_emb))
         x = x + a
         x = x + self.mlp(self.ln2(x))   # only one really use encoder_output
         return x
@@ -424,15 +424,12 @@ class Transformer(nn.Module):
     def forward(self, input, t, label=None, padding_masks=None, return_res=False):
         emb = self.emb(input)
         inp_enc = self.pos_enc(emb)
-        print(inp_enc.shape)
+        label_emb = self.label_emb(label) if label else None
 
-        if label is not None:
-            inp_enc = inp_enc + self.label_emb(label)
-
-        enc_cond = self.encoder(inp_enc, t, padding_masks=padding_masks)
+        enc_cond = self.encoder(inp_enc, t, padding_masks=padding_masks,label_emb=label_emb)
 
         inp_dec = self.pos_dec(emb)
-        output, mean, trend, season = self.decoder(inp_dec, t, enc_cond, padding_masks=padding_masks)
+        output, mean, trend, season = self.decoder(inp_dec, t, enc_cond, padding_masks=padding_masks,label_emb=label_emb)
 
         res = self.inverse(output)
         res_m = torch.mean(res, dim=1, keepdim=True)
