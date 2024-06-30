@@ -422,6 +422,7 @@ class Transformer(nn.Module):
         self.pos_dec = LearnablePositionalEncoding(d_model, dropout=resid_pdrop, max_len=max_len)
 
     def forward(self, input, t, label=None, padding_masks=None, return_res=False):
+        print(label.shape)
         emb = self.emb(input)
         inp_enc = self.pos_enc(emb)
         label_emb = self.label_emb(label) if label else None
