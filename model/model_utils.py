@@ -172,7 +172,7 @@ class AdaLayerNorm(nn.Module):
         self.layernorm = nn.LayerNorm(n_embd,elementwise_affine=False)
     
     def forward(self,x,timestep,label_emb=None):
-        emb = self.emb(timestep) + label_emb if label_emb else self.emb(timestep)
+        emb = self.emb(timestep) + label_emb if label_emb is not None else self.emb(timestep)
         emb = self.linear(self.silu(emb)).unsqueeze(1)
         scale, shift = torch.chunk(emb,2,dim=2)
         x = self.layernorm(x) * (1 + scale) + shift
@@ -188,7 +188,7 @@ class AdaInsNorm(nn.Module):
         self.instancenorm = nn.InstanceNorm1d(n_embd)
 
     def forward(self,x,timestep,label_emb=None):
-        emb = self.emb(timestep) + label_emb if label_emb else self.emb(timestep)
+        emb = self.emb(timestep) + label_emb if label_emb is not None else self.emb(timestep)
         emb = self.linear(self.silu(emb)).unsqueeze(1)
         scale, shift = torch.chunk(emb,2,dim=2)
         x = self.instancenorm(x.transpose(-1,-2)).transpose(-1,-2) * (1+scale) + shift
