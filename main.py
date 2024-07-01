@@ -7,6 +7,8 @@ from train_utils import Trainer
 from data_utils import build_dataloader
 from io_utils import load_yaml_config, seed_everything, instantiate_from_config
 
+from analyze import plot_sample, plot_all_pca
+
 
 def parse_argument():
     parser = argparse.ArgumentParser(description='Pytorch Training Script')
@@ -18,6 +20,9 @@ def parse_argument():
     parser.add_argument('--seed',type=int,default=12345)
     parser.add_argument('--milestone',type=int,default=None)
     parser.add_argument('--use_label',action='store_true')
+    parser.add_argument('--analyze',action="store_true")
+    parser.add_argument('--image_path',type=str,default='./images')
+    parser.add_argument('--num',type=int,defautl=5)
 
     args = parser.parse_args()
 
@@ -48,13 +53,20 @@ def main():
         output_name = f'synthesize_{config['model']['backbone']['params']['n_layer_enc']}_{config['model']['backbone']['params']['n_layer_dec']}_{config['model']['backbone']['params']['d_model']}'
         if args.use_label:
             samples,labels = trainer.sample(config)
-            output = {'data':samples,'label':labels}
+            output = {'data':samples.transpose(0,2,1),'label':labels}
         
         else:
             samples = trainer.sample(config)
-            output = {'data':samples}
+            output = {'data':samples.transpose(0,2,1)}
 
         np.save(os.path.join(args.output,f"{output_name}.npy"),output)
+        
+        if args.analyze:
+            real = np.load(args.data,allow_pickle=True).item()
+            plot_sample(real,output,n=args.num,output_path=args.image_path)
+            plot_all_pca(real,output)
+            
+
             
 if __name__ == '__main__':
     main()
