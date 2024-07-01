@@ -54,7 +54,7 @@ def main():
             samples = trainer.sample(config)
             output = {'data':samples}
 
-        np.save(os.path.join(args.sample,f"{output_name}.npy"),output)
+        np.save(os.path.join(args.output,f"{output_name}.npy"),output)
             
 if __name__ == '__main__':
     main()

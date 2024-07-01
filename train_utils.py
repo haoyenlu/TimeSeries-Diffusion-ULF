@@ -55,6 +55,7 @@ class Trainer:
         torch.save(data,os.path.join(self.results_folder,f'checkpoint-{milestone}.pt'))
     
     def load(self,milestone):
+        print(f"Loading milestone {os.path.join(self.results_folder,f'checkpoint-{milestone}.pt')}")
         device = self.device
         data = torch.load(os.path.join(self.results_folder,f'checkpoint-{milestone}.pt'),map_location=device)
         self.model.load_state_dict(data['model'])
@@ -71,7 +72,7 @@ class Trainer:
         # track time
         tic = time.time()
 
-        print("Start Training")
+        print("Start Training..")
         with tqdm(initial=step,total=self.train_num_epochs) as pbar:
             while step < self.train_num_epochs:
                 total_loss = 0
@@ -108,6 +109,7 @@ class Trainer:
         print("Training Complete","time:{:.2f}".format(time.time()-tic))
 
     def sample(self,config):
+        print("Start Sampling..")
         samples = np.empty([0,config['model']['params']['seq_length'],config['model']['params']['feature_size']])
         labels = np.empty([0,config['model']['params']['label_dim']])
         num = config['dataset']['samples']['num_sample']
