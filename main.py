@@ -12,12 +12,11 @@ def parse_argument():
     parser = argparse.ArgumentParser(description='Pytorch Training Script')
     parser.add_argument('--data',type=str,default=None)
     parser.add_argument('--config',type=str,default=None)
-    parser.add_argument('--sample',type=str,default='./samples')
-    parser.add_argument('--tensorboard',action='store_true')
-    parser.add_argument('--mode',type=str)
+    parser.add_argument('--output',type=str,default='./samples')
+    parser.add_argument('--train',action='store_true')
+    parser.add_argument('--sample',action='store_true')
     parser.add_argument('--seed',type=int,default=12345)
-    parser.add_argument('--task',type=str,default='T01')
-    parser.add_argument('--milestone',type=int,default=10)
+    parser.add_argument('--milestone',type=int,default=None)
     parser.add_argument('--use_label',action='store_true')
 
     args = parser.parse_args()
@@ -38,20 +37,24 @@ def main():
 
     trainer = Trainer(config=config,args=args,model=model)
 
-    if args.mode == 'train':
+    if args.milestone:
+        trainer.load(args.milestone)
+
+    if args.train:
         dataloader = build_dataloader(config,args)
         trainer.train(dataloader)
 
-    elif args.mode == 'sample':
-        trainer.load(args.milestone)
+    if args.sample:
+        output_name = f'synthesize_{config['model']['backbone']['params']['n_layer_enc']_{config['model']['backbone']['params']['n_layer_dec']_{config['model']['backbone']['params']['d_model']}'
         if args.use_label:
             samples,labels = trainer.sample(config)
-            np.save(os.path.join(args.sample,f"ddpm_{args.task}.npy"),{'data':samples,'label':labels})
+            output = {'data':samples,'label':labels}
+        
         else:
-            sample = trainer.sample(config)
-            np.save(os.path.join(args.sample,f"ddpm_{args.task}.npy"),sample)
+            samples = trainer.sample(config)
+            output = {'data':samples}
 
-
+        np.save(os.path.join(args.sample,f"{output_name}.npy"),output)
             
 if __name__ == '__main__':
     main()
