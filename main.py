@@ -45,7 +45,7 @@ def main():
         trainer.train(dataloader)
 
     if args.sample:
-        output_name = f'synthesize_{config['model']['backbone']['params']['n_layer_enc']_{config['model']['backbone']['params']['n_layer_dec']_{config['model']['backbone']['params']['d_model']}'
+        output_name = f'synthesize_{config['model']['backbone']['params']['n_layer_enc']}_{config['model']['backbone']['params']['n_layer_dec']}_{config['model']['backbone']['params']['d_model']}'
         if args.use_label:
             samples,labels = trainer.sample(config)
             output = {'data':samples,'label':labels}
