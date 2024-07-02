@@ -22,7 +22,7 @@ def parse_argument():
     parser.add_argument('--use_label',action='store_true')
     parser.add_argument('--analyze',action="store_true")
     parser.add_argument('--image_path',type=str,default='./images')
-    parser.add_argument('--num',type=int,defautl=5)
+    parser.add_argument('--num',type=int,default=5)
 
     args = parser.parse_args()
 
