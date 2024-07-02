@@ -18,10 +18,12 @@ def plot_sample(real,fake,n = 5,output_path='./image'):
     axs[0,1].set_title("Synthesize")
     fig.subplots_adjust(hspace=0.6)
     plt.savefig(os.path.join(output_path,"Sample.png"),bbox_inches='tight')
+    plt.close(fig)
 
 
 def plot_all_pca(real,fake,output_path='./image'):
     _ , C , T = real.shape
+    plt.figure(figsize=(8,6))
     pca = PCA(2)
     real_transform = pca.fit_transform(real.reshape(-1,C * T))
     fake_transform = pca.transform(fake.reshape(-1,C * T))
