@@ -2,12 +2,16 @@ import os
 import torch
 import argparse
 import numpy as np
+import csv
 
 from train_utils import Trainer
 from data_utils import build_dataloader
 from io_utils import load_yaml_config, seed_everything, instantiate_from_config
 
-from analyze import plot_sample, plot_all_pca
+from analyze import plot_sample, plot_all_pca, plot_training_loss
+
+
+
 
 
 def parse_argument():
@@ -22,6 +26,7 @@ def parse_argument():
     parser.add_argument('--analyze',action="store_true")
     parser.add_argument('--image_path',type=str,default='./images')
     parser.add_argument('--num',type=int,default=5)
+    parser.add_argument('--csv',type=str,default=None)
 
     args = parser.parse_args()
 
@@ -32,7 +37,6 @@ def main():
 
     seed = np.random.randint(0,99999)
     seed_everything(seed)
-    print(f"Use Seed: {seed}")
     
     os.makedirs(args.output,exist_ok=True)
     config = load_yaml_config(args.config)
@@ -47,6 +51,10 @@ def main():
     if args.train:
         dataloader = build_dataloader(config,args)
         trainer.train(dataloader)
+        plot_training_loss(trainer.history['loss'],output_path=args.image_path)
+
+        if args.csv is not None:
+            trainer.export_to_csv(config,args.csv)
 
     if args.sample:
         output_name = f"synthesize_{config['model']['backbone']['params']['n_layer_enc']}_{config['model']['backbone']['params']['n_layer_dec']}_{config['model']['backbone']['params']['d_model']}"
@@ -64,7 +72,9 @@ def main():
             real = np.load(args.data,allow_pickle=True).item()
             plot_sample(real['data'],output['data'],n=args.num,output_path=args.image_path)
             plot_all_pca(real['data'],output['data'],output_path=args.image_path)
-            
+
+        
+
 
             
 if __name__ == '__main__':

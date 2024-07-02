@@ -23,7 +23,7 @@ def plot_sample(real,fake,n = 5,output_path='./image'):
 
 def plot_all_pca(real,fake,output_path='./image'):
     _ , C , T = real.shape
-    plt.figure(figsize=(8,6))
+    fig = plt.figure(figsize=(8,6))
     pca = PCA(2)
     real_transform = pca.fit_transform(real.reshape(-1,C * T))
     fake_transform = pca.transform(fake.reshape(-1,C * T))
@@ -31,3 +31,13 @@ def plot_all_pca(real,fake,output_path='./image'):
     plt.scatter(fake_transform[:,0],fake_transform[:,1],label="Fake",s=5)
     plt.legend()
     plt.savefig(os.path.join(output_path,"PCA.png"))
+    plt.close(fig)
+
+
+def plot_training_loss(losses,output_path):
+    fig = plt.figure(figsize=(10,5))
+    plt.plot(losses)
+    plt.xlabel('Epoch')
+    plt.ylabel('Losses')
+    plt.savefig(os.path.join(output_path,"Loss.png"))
+    plt.close(fig)

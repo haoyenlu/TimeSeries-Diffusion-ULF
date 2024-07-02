@@ -3,10 +3,10 @@ model:
   params:
     seq_length: 1024
     feature_size: 24
-    timesteps: 100
-    sampling_timesteps: 100
+    timesteps: 128
+    sampling_timesteps: 128
     loss_type: 'l2'
-    beta_schedule: 'cosine'
+    beta_schedule: 'linear'
     label_dim: 30
 
   backbone:
@@ -17,16 +17,16 @@ model:
         d_model: 64
         n_head : 4
         mlp_hidden_times: 4
-        attn_pdrop: 0.1
-        resit_pdrop: 0.1
-        kernel_size: 3
-        padding_size: 1
+        attn_pdrop: 0.6
+        resit_pdrop: 0.6
+        kernel_size: 5
+        padding_size: 2
 
 
 
 solver:
   base_lr: 1.0e-5
-  max_epochs: 2000
+  max_epochs: 4000
   results_folder: ./checkpoint_4_4_64_100_l2_cosine
   gradient_accumulate_every: 2
   save_cycle: 100  # max_epochs // 10
@@ -49,5 +49,22 @@ solver:
 dataset:
   batch_size: 8
   samples:
-    num_sample: 200
+    num_sample: 1000
     size_every: 10
+
+
+csv_fields: 
+ - n_layer_enc
+ - n_layer_dec
+ - d_model
+ - n_head
+ - mlp_hidden_time
+ - timestep
+ - loss_type
+ - beta_schedule
+ - lr
+ - epoch
+ - attn_drop
+ - resit_drop
+ - loss
+ - time

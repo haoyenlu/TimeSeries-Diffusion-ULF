@@ -3,6 +3,7 @@ import sys
 import time
 import torch
 import numpy as np
+import csv
 
 from pathlib import Path
 from tqdm.auto import tqdm
@@ -27,7 +28,7 @@ class Trainer:
         self.step = 0
         self.milestone = 0
         self.args = args
-        self.logger = logger
+        self.history = {'loss':[],'time':0}
 
         self.results_folder = Path(config['solver']['results_folder'] + f'_{model.seq_length}')
         os.makedirs(self.results_folder,exist_ok=True)
@@ -89,6 +90,8 @@ class Trainer:
                     loss.backward()
                     total_loss += loss.item()
                 pbar.set_description(f'loss: {total_loss:.6f}')
+                self.history['loss'].append(total_loss)
+
 
                 clip_grad_norm_(self.model.parameters(),1.0)
                 self.opt.step()
@@ -106,7 +109,9 @@ class Trainer:
                 
                 pbar.update(1)
         
-        print("Training Complete","time:{:.2f}".format(time.time()-tic))
+        train_time = time.time() - tic
+        print("Training Complete","time:{:.2f}".format(train_time))
+        self.history['time'] = train_time
 
     def sample(self,config):
         print("Start Sampling..")
@@ -129,4 +134,21 @@ class Trainer:
             torch.cuda.empty_cache()
 
         return samples,labels if self.args.use_label else samples
+    
+
+    def export_to_csv(self,config,csvfile):
+        fields = config['csv_fields']
+        data = config['model']['backbone']['params']
+        data.update(config['model']['params'])
+        data.update({'loss':self.history['loss'][-1],'time':self.history['time']})
+        data.update({'lr':config['solver']['base_lr'],'epoch':self.train_num_epochs})
+        with open(csvfile,'w') as file:
+            writer = csv.DictReader(file,fieldnames=fields)
+            sniffer = csv.Sniffer()
+            if not sniffer.has_header(file.read(2048)):
+                writer.writeheader()
+            writer.writerows(data)
+        
+            
+
     
