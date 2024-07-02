@@ -153,10 +153,13 @@ class Trainer:
             writer.writeheader()
             writer.writerows(data)
     
-    def export_analysis(self,real,fake,num,image_path):
+    def export_analysis(self,real_path,fake_path,num,image_path):
         ''' Plot Real and Fake sample '''
         image_path = os.path.join(image_path,self.id)
         os.makedirs(image_path,exist_ok=True)
+
+        real = np.load(real_path,allow_pickle=True).item()['data']
+        fake = np.load(os.path.join(fake_path,f"{self.id}.npy"),allow_pickle=True).item()['data']
 
         _ , C, T = real.shape
         fig,axs = plt.subplots(nrows=num,ncols=2,figsize=(2*num,8))

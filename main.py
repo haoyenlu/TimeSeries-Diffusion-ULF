@@ -50,18 +50,11 @@ def main():
 
 
     if args.sample:
-        if args.use_label:
-            samples,labels = trainer.sample(config,output_path=args.output)
-            output = {'data':samples.transpose(0,2,1),'label':labels}
-        
-        else:
-            samples = trainer.sample(config)
-            output = {'data':samples.transpose(0,2,1)}
-        
+        trainer.sample(config,output_path=args.output)
+
         if args.analyze:
-            real = np.load(args.data,allow_pickle=True).item()
             trainer.export_to_csv(args.csv)
-            trainer.export_analysis(real['data'],output['data'],args.num,args.image_path)
+            trainer.export_analysis(args.data,args.output,args.num,args.image_path)
         
 
 
