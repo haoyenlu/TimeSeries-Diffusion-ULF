@@ -8,10 +8,6 @@ from train_utils import Trainer
 from data_utils import build_dataloader
 from io_utils import load_yaml_config, seed_everything, instantiate_from_config
 
-from analyze import plot_sample, plot_all_pca, plot_training_loss
-
-
-
 
 
 def parse_argument():
@@ -51,28 +47,21 @@ def main():
     if args.train:
         dataloader = build_dataloader(config,args)
         trainer.train(dataloader)
-        plot_training_loss(trainer.history['loss'],output_path=args.image_path)
 
-        if args.csv is not None:
-            trainer.export_to_csv(config,args.csv)
 
     if args.sample:
-        output_name = f"synthesize_{config['model']['backbone']['params']['n_layer_enc']}_{config['model']['backbone']['params']['n_layer_dec']}_{config['model']['backbone']['params']['d_model']}"
         if args.use_label:
-            samples,labels = trainer.sample(config)
+            samples,labels = trainer.sample(config,output_path=args.output)
             output = {'data':samples.transpose(0,2,1),'label':labels}
         
         else:
             samples = trainer.sample(config)
             output = {'data':samples.transpose(0,2,1)}
-
-        np.save(os.path.join(args.output,f"{output_name}.npy"),output)
         
         if args.analyze:
             real = np.load(args.data,allow_pickle=True).item()
-            plot_sample(real['data'],output['data'],n=args.num,output_path=args.image_path)
-            plot_all_pca(real['data'],output['data'],output_path=args.image_path)
-
+            trainer.export_to_csv(args.csv)
+            trainer.export_analysis(real['data'],output['data'],args.num,args.image_path)
         
 
 

@@ -1,9 +1,10 @@
 import os
-import sys
 import time
 import torch
 import numpy as np
 import csv
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
 
 from pathlib import Path
 from tqdm.auto import tqdm
@@ -20,6 +21,7 @@ def cycle(dl):
 class Trainer:
     def __init__(self,config,args,model,logger=None):
         super().__init__()
+        self.config = config
         self.model = model
         self.device = model.betas.device
         self.train_num_epochs = config['solver']['max_epochs']
@@ -27,10 +29,11 @@ class Trainer:
         self.save_cycle = config['solver']['save_cycle']
         self.step = 0
         self.milestone = 0
-        self.args = args
+        self.use_label = args.use_label
         self.history = {'loss':[],'time':0}
+        self.id = time.strftime("%Y_%m_%d_%H_%M",time.gmtime())
 
-        self.results_folder = Path(config['solver']['results_folder'] + f'_{time.strftime("%Y_%m_%d_%H_%M",time.gmtime())}')
+        self.results_folder = Path(config['solver']['results_folder'] + f'_{self.id}')
         os.makedirs(self.results_folder,exist_ok=True)
 
         start_lr = config['solver'].get('base_lr',1.0e-4)
@@ -76,7 +79,7 @@ class Trainer:
             while step < self.train_num_epochs:
                 total_loss = 0
                 for _ in range(self.gradient_accumulate_every):
-                    if self.args.use_label:
+                    if self.use_label:
                         temp = next(dl)
                         data, label = temp[0].float().to(device), temp[1].float().to(device)
                     else:
@@ -111,7 +114,7 @@ class Trainer:
         print("Training Complete","time:{:.2f}".format(train_time))
         self.history['time'] = train_time
 
-    def sample(self,config):
+    def sample(self,config,output_path='./samples'):
         print("Start Sampling..")
         samples = np.empty([0,config['model']['params']['seq_length'],config['model']['params']['feature_size']])
         labels = np.empty([0,config['model']['params']['label_dim']])
@@ -121,7 +124,7 @@ class Trainer:
 
 
         for _ in tqdm(range(num_cycle)):
-            if self.args.use_label:
+            if self.use_label:
                 sample,label = self.ema.ema_model.generate_mts(batch_size=size_every,use_label=True)
                 samples = np.row_stack([samples , sample.detach().cpu().numpy()])
                 labels = np.row_stack([labels,label.detach().cpu().numpy()])
@@ -131,22 +134,64 @@ class Trainer:
 
             torch.cuda.empty_cache()
 
-        return samples,labels if self.args.use_label else samples
+        if self.use_label:
+            output = {'data':samples.transpose(0,2,1),'label':labels}
+        else:
+            output = {'data':samples.transpose(0,2,1)}
+
+        np.save(os.path.join(output_path,f"{self.id}.npy"),output)
     
 
-    def export_to_csv(self,config,csvfile):
-        fields = config['csv_fields']
-        data = config['model']['backbone']['params']
-        data.update(config['model']['params'])
+    def export_to_csv(self,csvPath):
+        fields = self.config['csv_fields']
+        data = self.config['model']['backbone']['params']
+        data.update(self.config['model']['params'])
         data.update({'loss':self.history['loss'][-1],'time':self.history['time']})
-        data.update({'lr':config['solver']['base_lr'],'epoch':self.train_num_epochs})
-        with open(csvfile,'w') as file:
+        data.update({'lr':self.config['solver']['base_lr'],'epoch':self.train_num_epochs})
+        with open(os.path.join(csvPath,f'{self.id}.csv'),'w') as file:
             writer = csv.DictReader(file,fieldnames=fields)
-            sniffer = csv.Sniffer()
-            if not sniffer.has_header(file.read(2048)):
-                writer.writeheader()
+            writer.writeheader()
             writer.writerows(data)
-        
-            
+    
+    def export_analysis(self,real,fake,num,image_path):
+        ''' Plot Real and Fake sample '''
+        image_path = os.path.join(image_path,self.id)
+        os.makedirs(image_path,exist_ok=True)
+
+        _ , C, T = real.shape
+        fig,axs = plt.subplots(nrows=num,ncols=2,figsize=(2*num,8))
+
+        for j in range(num):
+            fake_sample = np.random.randint(fake.shape[0])
+            real_sample = np.random.randint(real.shape[0])
+            for i in range(C):
+                axs[j,0].plot(real[real_sample,i,:])
+                axs[j,1].plot(fake[fake_sample,i,:])
+
+        axs[0,0].set_title("Original")
+        axs[0,1].set_title("Synthesize")
+        fig.subplots_adjust(hspace=0.6)
+        plt.savefig(os.path.join(image_path,"Sample.png"),bbox_inches='tight')
+        plt.close(fig)
+
+        ''' Plot PCA '''
+        fig = plt.figure(figsize=(8,6))
+        pca = PCA(2)
+        real_transform = pca.fit_transform(real.reshape(-1,C * T))
+        fake_transform = pca.transform(fake.reshape(-1,C * T))
+        plt.scatter(real_transform[:,0],real_transform[:,1],label="Real",s=5)
+        plt.scatter(fake_transform[:,0],fake_transform[:,1],label="Fake",s=5)
+        plt.legend()
+        plt.savefig(os.path.join(image_path,"PCA.png"),bbox_inches='tight')
+        plt.close(fig)
+
+        ''' Plot Training Loss '''
+        fig = plt.figure(figsize=(10,5))
+        plt.plot(self.history['loss'])
+        plt.xlabel('Epoch')
+        plt.ylabel('Losses')
+        plt.savefig(os.path.join(image_path,"Loss.png"),bbox_inches='tight')
+        plt.close(fig)
+                
 
     
