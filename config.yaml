@@ -2,10 +2,10 @@ model:
   target: model.gaussian_diffusion.Diffusion_TS
   params:
     seq_length: 1024
-    feature_size: 12
-    timesteps: 1024
-    sampling_timesteps: 1024
-    loss_type: 'l1'
+    feature_size: 24
+    timesteps: 100
+    sampling_timesteps: 100
+    loss_type: 'l2'
     beta_schedule: 'cosine'
     label_dim: 30
 
@@ -19,16 +19,15 @@ model:
         mlp_hidden_times: 4
         attn_pdrop: 0.1
         resit_pdrop: 0.1
-        kernel_size: 5
-        padding_size: 2
-        use_mamba: True
+        kernel_size: 3
+        padding_size: 1
 
 
 
 solver:
   base_lr: 1.0e-5
-  max_epochs: 30000
-  results_folder: ./Checkpoints
+  max_epochs: 2000
+  results_folder: ./checkpoint_4_4_64_100_l2_cosine
   gradient_accumulate_every: 2
   save_cycle: 100  # max_epochs // 10
   ema:

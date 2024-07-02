@@ -406,7 +406,7 @@ class Transformer(nn.Module):
         super().__init__()
         self.emb = Conv_MLP(n_feat, d_model, resid_pdrop=resid_pdrop)
         self.inverse = Conv_MLP(d_model, n_feat, resid_pdrop=resid_pdrop)
-        self.label_emb = nn.Sequential(nn.Linear(label_dim,d_model),nn.Softmax(dim=d_model))
+        self.label_emb = nn.Sequential(nn.Linear(label_dim,d_model),nn.Softmax(dim=1))
             
 
         self.combine_s = nn.Conv1d(d_model, n_feat, kernel_size=kernel_size, stride=1, padding=padding,
