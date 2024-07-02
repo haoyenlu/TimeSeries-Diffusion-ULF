@@ -30,7 +30,7 @@ class Trainer:
         self.args = args
         self.history = {'loss':[],'time':0}
 
-        self.results_folder = Path(config['solver']['results_folder'] + f'_{model.seq_length}')
+        self.results_folder = Path(config['solver']['results_folder'] + f'_{time.strftime("%Y_%m_%d_%H_%M",time.gmtime())}')
         os.makedirs(self.results_folder,exist_ok=True)
 
         start_lr = config['solver'].get('base_lr',1.0e-4)
@@ -43,8 +43,6 @@ class Trainer:
         sc_cfg = config['solver']['scheduler']
         sc_cfg['params']['optimizer'] = self.opt
         self.sch = instantiate_from_config(sc_cfg)
-
-        self.log_frequency = 100
 
     def save(self,milestone):
         data = {
