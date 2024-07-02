@@ -33,7 +33,7 @@ class Trainer:
         self.history = {'loss':[],'time':0}
         self.id = time.strftime("%Y_%m_%d_%H_%M",time.gmtime())
 
-        self.results_folder = Path(config['solver']['results_folder'] + f'_{self.id}')
+        self.results_folder = os.path.join(config['solver']['results_folder'],f'checkpoint_{self.id}')
         os.makedirs(self.results_folder,exist_ok=True)
 
         start_lr = config['solver'].get('base_lr',1.0e-4)
