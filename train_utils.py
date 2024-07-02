@@ -155,9 +155,8 @@ class Trainer:
         data.update({'loss':self.history['loss'][-1],'time':self.history['time']})
         data.update({'lr':self.config['solver']['base_lr'],'epoch':self.train_num_epochs})
 
-        with open(csvPath,'w') as file:
+        with open(csvPath,'a') as file:
             writer = csv.DictWriter(file,fieldnames=fields)
-            writer.writeheader()
             writer.writerow(data)
     
     def export_analysis(self,real_path,fake_path,num,image_path):
