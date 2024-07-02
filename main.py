@@ -17,7 +17,6 @@ def parse_argument():
     parser.add_argument('--output',type=str,default='./samples')
     parser.add_argument('--train',action='store_true')
     parser.add_argument('--sample',action='store_true')
-    parser.add_argument('--seed',type=int,default=12345)
     parser.add_argument('--milestone',type=int,default=None)
     parser.add_argument('--use_label',action='store_true')
     parser.add_argument('--analyze',action="store_true")
@@ -31,12 +30,12 @@ def parse_argument():
 def main():
     args = parse_argument()
 
-    seed_everything(args.seed)
-
-    os.makedirs(args.output,exist_ok=True)
-
-    config = load_yaml_config(args.config)
+    seed = np.random.randint(0,99999)
+    seed_everything(seed)
+    print(f"Use Seed: {seed}")
     
+    os.makedirs(args.output,exist_ok=True)
+    config = load_yaml_config(args.config)
     model = instantiate_from_config(config['model'],configs=config['model']).cuda()
 
 
