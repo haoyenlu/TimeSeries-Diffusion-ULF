@@ -38,8 +38,8 @@ kernel_size: kernel size for CNN
 padding_size: padding size for CNN
 ```
 
-#### Original author: 
-[https://github.com/Y-debug-sys/Diffusion-TS/tree/main]
+##### Referrences:
+Original author: [https://github.com/Y-debug-sys/Diffusion-TS/tree/main]
 ```
 @article{yuan2024diffusion,
   title={Diffusion-TS: Interpretable Diffusion for General Time Series Generation},
