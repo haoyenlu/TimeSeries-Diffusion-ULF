@@ -144,14 +144,14 @@ class Trainer:
 
     def export_to_csv(self,csvPath):
         fields = self.config['csv_fields']
+        print(fields)
         data = self.config['model']['backbone']['params']
         data.update(self.config['model']['params'])
         data.update({'loss':self.history['loss'][-1],'time':self.history['time']})
         data.update({'lr':self.config['solver']['base_lr'],'epoch':self.train_num_epochs})
         with open(os.path.join(csvPath,f'{self.id}.csv'),'w') as file:
             writer = csv.DictWriter(file,fieldnames=fields)
-            writer.writeheader()
-            writer.writerows(data)
+            writer.writerow(data)
     
     def export_analysis(self,real_path,fake_path,num,image_path):
         ''' Plot Real and Fake sample '''
