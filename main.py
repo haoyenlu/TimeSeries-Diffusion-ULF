@@ -63,7 +63,7 @@ def main():
         if args.analyze:
             real = np.load(args.data,allow_pickle=True).item()
             plot_sample(real['data'],output['data'],n=args.num,output_path=args.image_path)
-            plot_all_pca(real['data'],output['data'])
+            plot_all_pca(real['data'],output['data'],output_path=args.image_path)
             
 
             
