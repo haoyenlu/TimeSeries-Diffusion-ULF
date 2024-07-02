@@ -58,13 +58,13 @@ csv_fields:
  - n_layer_dec
  - d_model
  - n_head
- - mlp_hidden_time
- - timestep
+ - mlp_hidden_times
+ - timesteps
  - loss_type
  - beta_schedule
  - lr
  - epoch
- - attn_drop
- - resit_drop
+ - attn_pdrop
+ - resit_pdrop
  - loss
  - time
