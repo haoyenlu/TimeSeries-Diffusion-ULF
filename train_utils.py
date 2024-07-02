@@ -150,7 +150,6 @@ class Trainer:
         data.update({'lr':self.config['solver']['base_lr'],'epoch':self.train_num_epochs})
         with open(os.path.join(csvPath,f'{self.id}.csv'),'w') as file:
             writer = csv.DictReader(file,fieldnames=fields)
-            writer.writeheader()
             writer.writerows(data)
     
     def export_analysis(self,real_path,fake_path,num,image_path):
