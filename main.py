@@ -33,7 +33,7 @@ def main():
 
     seed_everything(args.seed)
 
-    os.makedirs(args.sample,exist_ok=True)
+    os.makedirs(args.output,exist_ok=True)
 
     config = load_yaml_config(args.config)
     
