@@ -18,7 +18,7 @@ model:
         n_head : 4
         mlp_hidden_times: 4
         attn_pdrop: 0.6
-        resit_pdrop: 0.6
+        resid_pdrop: 0.6
         kernel_size: 5
         padding_size: 2
 
@@ -65,6 +65,6 @@ csv_fields:
  - lr
  - epoch
  - attn_pdrop
- - resit_pdrop
+ - resid_pdrop
  - loss
  - time
